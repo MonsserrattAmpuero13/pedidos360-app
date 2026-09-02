@@ -1,1 +1,85 @@
-/* You can add global styles to this file, and also import other style files */
+.container {
+  font-family: system-ui, -apple-system, sans-serif;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  color: #333;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 15px;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.main-content {
+  margin-top: 30px;
+}
+
+.login-card {
+  text-align: center;
+  padding: 50px 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  background: white;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.badge {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-primary { background: #0078d4; color: white; }
+.btn-secondary { background: #e0e0e0; color: #333; }
+.btn-outline { background: transparent; border: 1px solid #ccc; }
+.alert-error { background: #ffebee; color: #c62828; padding: 10px; border-radius: 6px; margin: 10px 0; }
+.loading { color: #666; font-style: italic; }

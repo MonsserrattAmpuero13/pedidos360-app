@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/31a8f962-fc46-499a-98e9-0fd40b44fee8/resourceGroups/rg-pedidos360/providers/Microsoft.Web/sites/api-pedidos-360",
+    "appService.deploySubpath": "backend-pedidos/target/backend-pedidos-0.0.1-SNAPSHOT.jar"
+}
