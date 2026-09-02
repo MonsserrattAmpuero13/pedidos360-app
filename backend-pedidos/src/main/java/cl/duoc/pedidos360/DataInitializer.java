@@ -1,53 +1,38 @@
 package cl.duoc.pedidos360;
 
+import cl.duoc.pedidos360.model.Pedido;
+import cl.duoc.pedidos360.model.Producto;
+import cl.duoc.pedidos360.repository.PedidoRepository;
+import cl.duoc.pedidos360.repository.ProductoRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
-@Configuration
-public class DataInitializer {
+import java.math.BigDecimal;
 
-    @Bean
-    CommandLineRunner initDatabase(PedidoRepository repository) {
-        return args -> {
-            // Solo inserta si la base de datos está vacía para no duplicar en reinicios
-            if (repository.count() == 0) {
-                repository.save(new Pedido(
-                    "TRK-CL-9021",
-                    "Juan Pérez",
-                    "Notebook Lenovo ThinkPad E14",
-                    1,
-                    680000.0,
-                    "Blue Express",
-                    "Santiago Centro",
-                    "Entregado",
-                    null
-                ));
+@Component
+public class DataInitializer implements CommandLineRunner {
 
-                repository.save(new Pedido(
-                    "TRK-CL-4105",
-                    "María López",
-                    "Monitor Samsung 27 Curvo 144Hz",
-                    2,
-                    360000.0,
-                    "Chilexpress",
-                    "Pudahuel",
-                    "En Reparto",
-                    null
-                ));
+    @Autowired
+    private ProductoRepository productoRepository;
 
-                repository.save(new Pedido(
-                    "TRK-CL-7732",
-                    "Carlos Silva",
-                    "Teclado Mecánico Logitech MX",
-                    1,
-                    89990.0,
-                    "Flota Propia",
-                    "Maipú",
-                    "Incidencia en Ruta",
-                    "Dirección inaccesible - Sin timbre"
-                ));
-            }
-        };
+    @Autowired
+    private PedidoRepository pedidoRepository;
+
+    @Override
+    public void run(String... args) throws Exception {
+        if (productoRepository.count() == 0) {
+            productoRepository.save(new Producto(null, "ASEO-001", "Detergente Industrial 5L", "Bidón concentrado", "Aseo", new BigDecimal("12990"), 45, 10));
+            productoRepository.save(new Producto(null, "ASEO-002", "Cloro Gel Desinfectante 1L", "Envase individual", "Aseo", new BigDecimal("2490"), 5, 15));
+            productoRepository.save(new Producto(null, "ABAR-001", "Arroz Grado 1 (1kg)", "Bolsa individual", "Abarrotes", new BigDecimal("1350"), 120, 20));
+            productoRepository.save(new Producto(null, "ABAR-002", "Aceite Vegetal 900ml", "Botella", "Abarrotes", new BigDecimal("2190"), 8, 12));
+        }
+
+        if (pedidoRepository.count() == 0) {
+            Pedido p1 = new Pedido("P360-TEST01", "Minimarket Don Pepe", "Detergente Industrial 5L", 2, 25980.0, "Carlos Transportes", "Av. San Martín 1042, Maipú", "EN_RUTA", null);
+            Pedido p2 = new Pedido("P360-TEST02", "Almacén Los Aromos", "Arroz Grado 1 (1kg)", 10, 13500.0, "Juan Couriers", "Calle Las Flores 450, Puente Alto", "PENDIENTE", null);
+            pedidoRepository.save(p1);
+            pedidoRepository.save(p2);
+        }
     }
 }

@@ -1,4 +1,4 @@
-package cl.duoc.pedidos360;
+package cl.duoc.pedidos360.model;
 
 import jakarta.persistence.*;
 
