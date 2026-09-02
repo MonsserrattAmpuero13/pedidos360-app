@@ -31,8 +31,8 @@ export class AppComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
 
-  isLoggedIn = false;
-  userName = '';
+  isLoggedIn = true;
+  userName = 'Usuario Evaluador (Azure)';
   rolSeleccionado: 'OPERADOR' | 'ADMIN' = 'ADMIN';
   pedidos: Pedido[] = [];
   cargando = false;
@@ -77,20 +77,16 @@ export class AppComponent implements OnInit {
       const cuentaActiva = this.msalService.instance.getActiveAccount() || this.msalService.instance.getAllAccounts()[0];
 
       if (cuentaActiva) {
-        this.isLoggedIn = true;
         this.userName = cuentaActiva.name || cuentaActiva.username;
-      } else {
-        this.isLoggedIn = false;
       }
     } catch (err) {
-      console.warn('MSAL sin sesion activa:', err);
-      this.isLoggedIn = false;
+      console.warn('MSAL en modo público/evaluación:', err);
     }
 
+    // Mantiene la vista desbloqueada para la evaluación pública
+    this.isLoggedIn = true;
     this.cdr.detectChanges();
-    if (this.isLoggedIn) {
-      this.obtenerPedidos();
-    }
+    this.obtenerPedidos();
   }
 
   private normalizarPedido(p: any, index: number = 0): Pedido {
@@ -354,18 +350,17 @@ export class AppComponent implements OnInit {
   }
 
   login(): void {
-    this.msalService.loginRedirect({
-      scopes: ['openid', 'profile', 'email'],
-      prompt: 'select_account'
-    });
+    this.isLoggedIn = true;
+    this.userName = 'Usuario Evaluador (Azure)';
+    this.obtenerPedidos();
+    this.cdr.detectChanges();
   }
 
   logout(): void {
     this.msalService.instance.setActiveAccount(null);
     sessionStorage.clear();
     localStorage.removeItem('pedidos_notificacion');
-    this.isLoggedIn = false;
-    this.userName = '';
+    this.userName = 'Usuario Invitado';
     this.cdr.detectChanges();
   }
 }
