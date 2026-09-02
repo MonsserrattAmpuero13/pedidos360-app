@@ -14,25 +14,25 @@ import java.util.Map;
 public class ProductoController {
 
     @Autowired
-    private InventarioService inventarioService;
+    private InventarioService InventarioService;
 
     @GetMapping
     public ResponseEntity<List<Producto>> listarTodos() {
-        return ResponseEntity.ok(inventarioService.listarTodos());
+        return ResponseEntity.ok(InventarioService.listarTodos());
     }
 
     @GetMapping("/alertas")
     public ResponseEntity<List<Producto>> listarAlertas() {
-        return ResponseEntity.ok(inventarioService.listarAlertasQuiebre());
+        return ResponseEntity.ok(InventarioService.listarAlertasQuiebre());
     }
 
     @PostMapping
     public ResponseEntity<Producto> crear(@RequestBody Producto producto) {
-        return ResponseEntity.ok(inventarioService.guardar(producto));
+        return ResponseEntity.ok(InventarioService.guardar(producto));
     }
 
     @PatchMapping("/{id}/stock")
     public ResponseEntity<Producto> ajustarStock(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
-        return ResponseEntity.ok(inventarioService.actualizarStock(id, body.get("stock")));
+        return ResponseEntity.ok(InventarioService.actualizarStock(id, body.get("stock")));
     }
 }
