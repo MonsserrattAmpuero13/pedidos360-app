@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class PedidoService {
@@ -21,39 +20,41 @@ public class PedidoService {
 
     public Pedido buscarPorTracking(String tracking) {
         return pedidoRepository.findByTracking(tracking)
-                .orElseThrow(() -> new RuntimeException("Envío no encontrado con tracking: " + tracking));
+                .orElseThrow(() -> new RuntimeException("Envío no encontrado: " + tracking));
     }
 
     @Transactional
-    public Pedido crearPedido(Pedido pedido) {
-        if (pedido.getTracking() == null || pedido.getTracking().isBlank()) {
-            pedido.setTracking("P360-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        }
-        if (pedido.getEstado() == null || pedido.getEstado().isBlank()) {
-            pedido.setEstado("PENDIENTE");
+    public Pedido guardarOActualizar(Pedido pedido) {
+        if (pedido.getId() == null) {
+            if (pedido.getTracking() == null || pedido.getTracking().isBlank()) {
+                pedido.setTracking("TRK-CL-" + (int)(1000 + Math.random() * 9000));
+            }
+            if (pedido.getEstado() == null || pedido.getEstado().isBlank()) {
+                pedido.setEstado("En Preparacion");
+            }
         }
         return pedidoRepository.save(pedido);
     }
 
     @Transactional
-    public Pedido actualizarEstado(Long id, String nuevoEstado, String courier) {
+    public Pedido actualizarEstado(Long id, String nuevoEstado) {
         Pedido pedido = pedidoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
-
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
         pedido.setEstado(nuevoEstado);
-        if (courier != null && !courier.isBlank()) {
-            pedido.setCourier(courier);
-        }
         return pedidoRepository.save(pedido);
     }
 
     @Transactional
-    public Pedido reportarIncidencia(Long id, String descripcionIncidencia) {
+    public Pedido actualizarIncidencia(Long id, String motivo) {
         Pedido pedido = pedidoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
-
-        pedido.setEstado("INCIDENCIA");
-        pedido.setIncidencia(descripcionIncidencia);
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+        pedido.setIncidencia(motivo != null && !motivo.isBlank() ? motivo : null);
+        pedido.setEstado(motivo != null && !motivo.isBlank() ? "Incidencia en Ruta" : "En Transito");
         return pedidoRepository.save(pedido);
+    }
+
+    @Transactional
+    public void eliminarPedido(Long id) {
+        pedidoRepository.deleteById(id);
     }
 }

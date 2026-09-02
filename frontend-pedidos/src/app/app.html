@@ -1,254 +1,264 @@
-<div class="app-container">
+<div class="contenedor-principal">
   <!-- Barra Superior -->
-  <header class="header">
+  <header class="navbar">
     <div class="brand">
-      <div class="logo-box">TMS</div>
-      <div>
-        <h1 class="portal-title">Pedidos 360 | TMS Logistica</h1>
-        <p class="portal-subtitle">Gestion de Envios </p>
-      </div>
+      <h2>Pedidos 360</h2>
     </div>
 
-    <!-- Acciones de Usuario (Solo visible si ya inicio sesion) -->
-    <div class="user-actions" *ngIf="isLoggedIn">
-      <div class="role-switcher">
-        <button [class.active]="rolSeleccionado === 'OPERADOR'" (click)="cambiarRol('OPERADOR')">Operador</button>
-        <button [class.active]="rolSeleccionado === 'ADMIN'" (click)="cambiarRol('ADMIN')">Administrador</button>
+    <!-- Navegacion de Modulos -->
+    <nav class="nav-modulos">
+      <button [class.activo]="moduloActivo === 'PEDIDOS'" (click)="cambiarModulo('PEDIDOS')">
+        Despachos y Envios
+      </button>
+      <button [class.activo]="moduloActivo === 'PRODUCTOS'" (click)="cambiarModulo('PRODUCTOS')">
+        Inventario de Productos
+      </button>
+    </nav>
+
+    <div class="usuario-seccion">
+      <div class="selector-rol">
+        <label>Rol:</label>
+        <button [class.activo]="rolSeleccionado === 'ADMIN'" (click)="cambiarRol('ADMIN')">ADMIN</button>
+        <button [class.activo]="rolSeleccionado === 'OPERADOR'" (click)="cambiarRol('OPERADOR')">OPERADOR</button>
       </div>
-      <div class="user-pill">
-        <span class="user-badge">{{ rolSeleccionado }}</span>
-        <span class="user-name">{{ userName }}</span>
-      </div>
-      <button class="btn-action btn-danger" (click)="logout()">Salir</button>
     </div>
   </header>
 
-  <!-- PANTALLA DE ACCESO CUANDO NO HAY SESION -->
-  <div class="login-card" *ngIf="!isLoggedIn">
-    <div class="login-badge">Acceso Corporativo</div>
-    <h2>Portal Logistico Pedidos 360</h2>
-    <p class="login-desc">
-      Sistema empresarial de distribucion y trazabilidad. Ingresa con tus credenciales institucionales validadas por Microsoft Entra ID.
-    </p>
-    <button class="btn-nuevo btn-login" (click)="login()">
-      Iniciar Sesion con Microsoft
-    </button>
+  <!-- Banner de Notificacion -->
+  <div *ngIf="notificacionReciente" class="alerta-banner">
+    <span>{{ notificacionReciente }}</span>
+    <button (click)="descartarNotificacion()" class="btn-cerrar">Cerrar</button>
   </div>
 
-  <!-- Notificacion Global del Sistema -->
-  <div class="banner-notificacion" *ngIf="isLoggedIn && notificacionReciente">
-    <div class="banner-contenido">
-      <span class="banner-etiqueta">Aviso del Sistema</span>
-      <span class="banner-mensaje">{{ notificacionReciente }}</span>
-    </div>
-    <button class="banner-cerrar" (click)="descartarNotificacion()">Entendido</button>
-  </div>
+  <main class="contenido">
+    <!-- Panel de Metricas Generales -->
+    <section class="grid-metricas">
+      <div class="card-metrica">
+        <span class="metrica-label">Total Envios</span>
+        <span class="metrica-valor">{{ pedidos.length }}</span>
+      </div>
+      <div class="card-metrica pendientes">
+        <span class="metrica-label">En Preparacion</span>
+        <span class="metrica-valor">{{ getCount('En Preparacion') }}</span>
+      </div>
+      <div class="card-metrica ruta">
+        <span class="metrica-label">En Ruta</span>
+        <span class="metrica-valor">{{ getCountRuta() }}</span>
+      </div>
+      <div class="card-metrica incidencias">
+        <span class="metrica-label">Incidencias Activas</span>
+        <span class="metrica-valor">{{ getCountIncidencias() }}</span>
+      </div>
+      <div class="card-metrica alertas">
+        <span class="metrica-label">Alertas de Stock</span>
+        <span class="metrica-valor">{{ getAlertasStockCount() }}</span>
+      </div>
+    </section>
 
-  <!-- PANEL PRINCIPAL (Visible tras iniciar sesion) -->
-  <main class="main-content" *ngIf="isLoggedIn">
-    <div class="panel-header">
-      <div>
-        <h2>Panel de Despacho y Distribucion</h2>
-        <p class="panel-desc" *ngIf="rolSeleccionado === 'OPERADOR'">
-          Modo Privacidad: Nombres protegidos mediante anonimizacion dinamica PII.
-        </p>
-        <p class="panel-desc" *ngIf="rolSeleccionado === 'ADMIN'">
-          Modo Administrador: Acceso completo a edicion de pedidos, despacho y supresion ARCO.
-        </p>
+    <!-- ================= VISTA 1: DESPACHOS ================= -->
+    <div *ngIf="moduloActivo === 'PEDIDOS'">
+      <div class="toolbar">
+        <div class="info-pedidos">
+          <h3>Gestion de Envios y Trazabilidad</h3>
+          <p>{{ pedidos.length }} ordenes registradas</p>
+        </div>
+        <div class="acciones-toolbar">
+          <button (click)="obtenerPedidos()" class="btn-secundario">Recargar</button>
+          <button *ngIf="rolSeleccionado === 'ADMIN'" (click)="toggleFormulario()" class="btn-primario">
+            {{ mostrarFormularioCreacion ? 'Cancelar' : '+ Nueva Guia' }}
+          </button>
+        </div>
       </div>
 
-      <button *ngIf="rolSeleccionado === 'ADMIN'" class="btn-nuevo" (click)="toggleFormulario()">
-        {{ mostrarFormularioCreacion ? 'Cerrar' : '+ Nueva Guia' }}
-      </button>
-    </div>
-
-    <!-- Formulario Crear Guia -->
-    <div class="form-card" *ngIf="mostrarFormularioCreacion && rolSeleccionado === 'ADMIN'">
-      <h3>Crear Orden de Despacho</h3>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Nombre del Titular:</label>
-          <input type="text" [(ngModel)]="nuevoPedido.cliente" placeholder="Ej. Camila Morales">
-        </div>
-        <div class="form-group">
-          <label>Producto:</label>
-          <select [(ngModel)]="nuevoPedido.producto">
-            <option value="Notebook Corporativo HP G8">Notebook Corporativo HP G8</option>
-            <option value="Monitor Curvo Samsung 27">Monitor Curvo Samsung 27"</option>
-            <option value="Teclado Mecanico Logitech MX">Teclado Mecanico Logitech MX</option>
-            <option value="Mouse Inalambrico">Mouse Inalambrico</option>
-            <option value="Cama Rosen King">Cama Rosen King</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Courier:</label>
-          <select [(ngModel)]="nuevoPedido.courier">
-            <option *ngFor="let c of couriersDisponibles" [value]="c">{{ c }}</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Comuna de Destino:</label>
-          <input type="text" [(ngModel)]="nuevoPedido.destino" placeholder="Ej. Las Condes, Santiago">
-        </div>
-        <div class="form-group">
-          <label>Cantidad:</label>
-          <input type="number" min="1" [(ngModel)]="nuevoPedido.cantidad">
-        </div>
-        <div class="form-group">
-          <label>Valor Total ($CLP):</label>
-          <input type="number" [(ngModel)]="nuevoPedido.total">
-        </div>
-      </div>
-      <div class="form-actions">
-        <button class="btn-guardar" (click)="guardarNuevoPedido()">Generar y Despachar</button>
-      </div>
-    </div>
-
-    <!-- Tabla Cuadrada y Alineada -->
-    <div class="table-container">
-      <table class="styled-table">
-        <thead>
-          <tr>
-            <th class="col-tracking">N° Tracking</th>
-            <th class="col-cliente">Cliente</th>
-            <th class="col-producto">Producto / Cant.</th>
-            <th class="col-courier">Courier / Destino</th>
-            <th class="col-total">Total</th>
-            <th class="col-estado">Estado Distribucion</th>
-            <th class="col-acciones">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let p of pedidos">
-            <td>
-              <span class="tracking-pill">{{ p.tracking }}</span>
-            </td>
-            <td>
-              <span [class.masked]="rolSeleccionado === 'OPERADOR'">
-                {{ enmascararNombre(p.cliente) }}
-              </span>
-            </td>
-            <td>
-              <div class="prod-title">{{ p.producto }}</div>
-              <span class="prod-qty">Cant: {{ p.cantidad }} unid.</span>
-            </td>
-            <td>
-              <span class="courier-badge">{{ p.courier }}</span>
-              <div class="dest-text">{{ p.destino }}</div>
-            </td>
-            <td>
-              <span class="price-text">${{ p.total | number }}</span>
-            </td>
-            <td>
-              <select *ngIf="rolSeleccionado === 'ADMIN'" 
-                      [ngModel]="p.estado" 
-                      (ngModelChange)="cambiarEstado(p, $event)" 
-                      class="status-select"
-                      [attr.data-status]="p.estado">
-                <option *ngFor="let st of estadosDisponibles" [value]="st">{{ st }}</option>
-              </select>
-
-              <span *ngIf="rolSeleccionado === 'OPERADOR'" class="status-badge" [attr.data-status]="p.estado">
-                {{ p.estado }}
-              </span>
-
-              <div *ngIf="p.incidencia" class="incidencia-box">
-                [Alerta] {{ p.incidencia }}
-              </div>
-            </td>
-            <td>
-              <div class="action-buttons">
-                <button *ngIf="rolSeleccionado === 'ADMIN'" class="btn-action btn-edit" (click)="abrirModalEditar(p)">
-                  Editar
-                </button>
-                <button class="btn-action btn-warn" (click)="abrirModalIncidencia(p)">
-                  Incidencia
-                </button>
-                <button *ngIf="rolSeleccionado === 'ADMIN'" class="btn-action btn-danger" (click)="eliminarPedido(p.id, p.tracking)">
-                  Suprimir
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </main>
-
-  <!-- Modal de Edicion General -->
-  <div class="modal-backdrop" *ngIf="pedidoEnEdicion">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>Editar Orden: {{ pedidoEnEdicion.tracking }}</h3>
-        <button class="btn-close" (click)="cerrarModalEditar()">Cerrar</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Nombre del Titular:</label>
-          <input type="text" [(ngModel)]="pedidoEnEdicion.cliente">
-        </div>
-        <div class="form-group">
-          <label>Producto:</label>
-          <input type="text" [(ngModel)]="pedidoEnEdicion.producto">
-        </div>
-        <div class="form-group-row">
-          <div class="form-group">
+      <!-- Formulario Nueva Guia -->
+      <section *ngIf="mostrarFormularioCreacion && rolSeleccionado === 'ADMIN'" class="card-formulario">
+        <h4>Registrar Nuevo Envio</h4>
+        <div class="grid-form">
+          <div class="campo">
+            <label>Cliente:</label>
+            <input type="text" [(ngModel)]="nuevoPedido.cliente" placeholder="Nombre del cliente" />
+          </div>
+          <div class="campo">
+            <label>Comuna / Destino:</label>
+            <input type="text" [(ngModel)]="nuevoPedido.destino" placeholder="Comuna de destino" />
+          </div>
+          <div class="campo">
+            <label>Producto:</label>
+            <select [(ngModel)]="nuevoPedido.producto">
+              <option *ngFor="let prod of productos" [value]="prod.nombre">{{ prod.nombre }}</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>Cantidad:</label>
+            <input type="number" [(ngModel)]="nuevoPedido.cantidad" min="1" />
+          </div>
+          <div class="campo">
+            <label>Total ($ CLP):</label>
+            <input type="number" [(ngModel)]="nuevoPedido.total" />
+          </div>
+          <div class="campo">
             <label>Courier:</label>
-            <select [(ngModel)]="pedidoEnEdicion.courier">
+            <select [(ngModel)]="nuevoPedido.courier">
               <option *ngFor="let c of couriersDisponibles" [value]="c">{{ c }}</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Destino:</label>
-            <input type="text" [(ngModel)]="pedidoEnEdicion.destino">
-          </div>
         </div>
-        <div class="form-group-row">
-          <div class="form-group">
-            <label>Cantidad:</label>
-            <input type="number" [(ngModel)]="pedidoEnEdicion.cantidad">
-          </div>
-          <div class="form-group">
-            <label>Total ($CLP):</label>
-            <input type="number" [(ngModel)]="pedidoEnEdicion.total">
-          </div>
+        <div class="acciones-form">
+          <button (click)="guardarNuevoPedido()" class="btn-guardar">Generar Guia</button>
         </div>
-        <div class="form-group">
-          <label>Estado:</label>
-          <select [(ngModel)]="pedidoEnEdicion.estado">
-            <option *ngFor="let st of estadosDisponibles" [value]="st">{{ st }}</option>
-          </select>
+      </section>
+
+      <!-- Tabla de Envios -->
+      <section class="card-tabla">
+        <table class="tabla-logistica">
+          <thead>
+            <tr>
+              <th>Tracking</th>
+              <th>Cliente</th>
+              <th>Destino</th>
+              <th>Producto</th>
+              <th>Courier</th>
+              <th>Estado</th>
+              <th *ngIf="rolSeleccionado === 'ADMIN'">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of pedidos">
+              <td class="col-tracking">{{ p.tracking }}</td>
+              <td>
+                {{ enmascararNombre(p.cliente) }}
+                <span *ngIf="rolSeleccionado === 'OPERADOR'"></span>
+              </td>
+              <td>{{ p.destino }}</td>
+              <td>{{ p.producto }} (x{{ p.cantidad }})</td>
+              <td>{{ p.courier }}</td>
+              <td>
+                <span class="badge-estado" [ngClass]="p.estado.toLowerCase().replace(' ', '-')">
+                  {{ p.estado }}
+                </span>
+                <div *ngIf="p.incidencia" class="bloque-incidencia">
+                  <span class="texto-incidencia">Incidencia: {{ p.incidencia }}</span>
+                  <button *ngIf="rolSeleccionado === 'ADMIN'" (click)="abrirModalIncidencia(p)" class="btn-link-incidencia">
+                    Modificar Incidencia
+                  </button>
+                </div>
+              </td>
+              <td *ngIf="rolSeleccionado === 'ADMIN'" class="col-acciones">
+                <select [ngModel]="p.estado" (ngModelChange)="cambiarEstado(p, $event)" class="select-estado">
+                  <option *ngFor="let est of estadosDisponibles" [value]="est">{{ est }}</option>
+                </select>
+                <button (click)="abrirModalIncidencia(p)" class="btn-accion btn-accion-incidencia">
+                  {{ p.incidencia ? 'Modificar Incidencia' : 'Reportar Incidencia' }}
+                </button>
+                <button (click)="abrirModalEditar(p)" class="btn-accion">Editar</button>
+                <button (click)="eliminarPedido(p.id, p.tracking)" class="btn-accion btn-accion-eliminar">Eliminar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <!-- ================= VISTA 2: INVENTARIO ================= -->
+    <div *ngIf="moduloActivo === 'PRODUCTOS'">
+      <div class="toolbar">
+        <div class="info-pedidos">
+          <h3>Catalogo e Inventario de Productos</h3>
+          <p>{{ productos.length }} productos registrados en base de datos</p>
+        </div>
+        <div class="acciones-toolbar">
+          <button (click)="obtenerProductos()" class="btn-secundario">Recargar</button>
+          <button *ngIf="rolSeleccionado === 'ADMIN'" (click)="mostrarFormularioProducto = !mostrarFormularioProducto" class="btn-primario">
+            {{ mostrarFormularioProducto ? 'Cancelar' : '+ Nuevo Producto' }}
+          </button>
         </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn-cancelar" (click)="cerrarModalEditar()">Cancelar</button>
-        <button class="btn-guardar" (click)="guardarEdicion()">Guardar Cambios</button>
+
+      <!-- Formulario Nuevo Producto -->
+      <section *ngIf="mostrarFormularioProducto && rolSeleccionado === 'ADMIN'" class="card-formulario">
+        <h4>Registrar Producto en Inventario</h4>
+        <div class="grid-form">
+          <div class="campo"><label>SKU:</label><input type="text" [(ngModel)]="nuevoProducto.sku" placeholder="Ej: ELEC-005" /></div>
+          <div class="campo"><label>Nombre:</label><input type="text" [(ngModel)]="nuevoProducto.nombre" placeholder="Nombre del producto" /></div>
+          <div class="campo"><label>Categoria:</label><input type="text" [(ngModel)]="nuevoProducto.categoria" placeholder="Categoria" /></div>
+          <div class="campo"><label>Precio Unitario ($):</label><input type="number" [(ngModel)]="nuevoProducto.precio" /></div>
+          <div class="campo"><label>Stock Actual:</label><input type="number" [(ngModel)]="nuevoProducto.stock" /></div>
+          <div class="campo"><label>Stock Minimo (Umbral Alerta):</label><input type="number" [(ngModel)]="nuevoProducto.stockMinimo" /></div>
+        </div>
+        <div class="acciones-form"><button (click)="guardarNuevoProducto()" class="btn-guardar">Guardar Producto</button></div>
+      </section>
+
+      <!-- Tabla de Productos -->
+      <section class="card-tabla">
+        <table class="tabla-logistica">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Nombre</th>
+              <th>Categoria</th>
+              <th>Precio</th>
+              <th>Stock Actual</th>
+              <th>Stock Minimo</th>
+              <th>Estado Stock</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let prod of productos">
+              <td class="col-tracking">{{ prod.sku }}</td>
+              <td><strong>{{ prod.nombre }}</strong></td>
+              <td>{{ prod.categoria }}</td>
+              <td>${{ prod.precio | number }}</td>
+              <td><strong>{{ prod.stock }}</strong> unidades</td>
+              <td>{{ prod.stockMinimo }}</td>
+              <td>
+                <span class="badge-estado" [style.background]="prod.stock <= prod.stockMinimo ? '#fee2e2' : '#dcfce7'" [style.color]="prod.stock <= prod.stockMinimo ? '#991b1b' : '#166534'">
+                  {{ prod.stock <= prod.stockMinimo ? 'STOCK BAJO' : 'STOCK NORMAL' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+
+  <!-- ================= MODAL DEDICADO: MODIFICAR / REPORTAR INCIDENCIA ================= -->
+  <div *ngIf="pedidoParaIncidencia" class="modal-backdrop">
+    <div class="modal-contenido">
+      <h4>{{ pedidoParaIncidencia.incidencia ? 'Modificar Incidencia' : 'Reportar Incidencia' }} [{{ pedidoParaIncidencia.tracking }}]</h4>
+      <p>Edita o ingresa el detalle del problema en ruta reportado por el operador:</p>
+      <textarea [(ngModel)]="detalleIncidenciaTemp" rows="4" placeholder="Ej: Domicilio cerrado, cliente ausente, direccion con error..."></textarea>
+      <div class="acciones-modal">
+        <button (click)="cerrarModalIncidencia()" class="btn-secundario">Cancelar</button>
+        <button *ngIf="pedidoParaIncidencia.incidencia" (click)="solucionarIncidencia()" class="btn-resolver">
+          Marcar como Resuelta
+        </button>
+        <button (click)="guardarIncidencia()" class="btn-guardar">
+          {{ pedidoParaIncidencia.incidencia ? 'Actualizar Incidencia' : 'Registrar Incidencia' }}
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Modal de Gestion de Incidencias -->
-  <div class="modal-backdrop" *ngIf="pedidoParaIncidencia">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>Gestionar Incidencia: {{ pedidoParaIncidencia.tracking }}</h3>
-        <button class="btn-close" (click)="cerrarModalIncidencia()">Cerrar</button>
+  <!-- ================= MODAL DE EDICION GENERAL DE ORDEN ================= -->
+  <div *ngIf="pedidoEnEdicion" class="modal-backdrop">
+    <div class="modal-contenido">
+      <h4>Editar Orden: {{ pedidoEnEdicion.tracking }}</h4>
+      <div class="campo"><label>Cliente:</label><input type="text" [(ngModel)]="pedidoEnEdicion.cliente" /></div>
+      <div class="campo"><label>Destino:</label><input type="text" [(ngModel)]="pedidoEnEdicion.destino" /></div>
+      <div class="campo">
+        <label>Courier:</label>
+        <select [(ngModel)]="pedidoEnEdicion.courier">
+          <option *ngFor="let c of couriersDisponibles" [value]="c">{{ c }}</option>
+        </select>
       </div>
-      <div class="modal-body">
-        <p class="modal-subtext">
-          Registra o actualiza problemas en la ruta (ej. direccion inaccesible, paquete danado, cliente ausente).
-        </p>
-        <div class="form-group">
-          <label>Detalle de la Incidencia:</label>
-          <textarea rows="3" [(ngModel)]="detalleIncidenciaTemp" placeholder="Escribe el motivo del retraso o problema..."></textarea>
-        </div>
+      <div class="campo">
+        <label>Detalle de Incidencia (dejar vacio si no hay problema):</label>
+        <input type="text" [(ngModel)]="pedidoEnEdicion.incidencia" placeholder="Sin incidencia reportada" />
       </div>
-      <div class="modal-footer">
-        <button *ngIf="pedidoParaIncidencia.incidencia" class="btn-solucionar" (click)="solucionarIncidencia()">
-          Marcar Resuelta
-        </button>
-        <button class="btn-cancelar" (click)="cerrarModalIncidencia()">Cancelar</button>
-        <button class="btn-guardar" (click)="guardarIncidencia()">Guardar Incidencia</button>
+      <div class="acciones-modal">
+        <button (click)="cerrarModalEditar()" class="btn-secundario">Cancelar</button>
+        <button (click)="guardarEdicion()" class="btn-guardar">Guardar Cambios</button>
       </div>
     </div>
   </div>

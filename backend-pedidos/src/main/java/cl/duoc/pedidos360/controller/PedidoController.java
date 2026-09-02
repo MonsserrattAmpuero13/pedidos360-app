@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Map;
 
@@ -22,26 +23,24 @@ public class PedidoController {
         return ResponseEntity.ok(pedidoService.listarTodos());
     }
 
-    @GetMapping("/tracking/{tracking}")
-    public ResponseEntity<Pedido> consultarTracking(@PathVariable String tracking) {
-        return ResponseEntity.ok(pedidoService.buscarPorTracking(tracking));
-    }
-
     @PostMapping
-    public ResponseEntity<Pedido> crearPedido(@RequestBody Pedido pedido) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(pedidoService.crearPedido(pedido));
+    public ResponseEntity<Pedido> guardar(@RequestBody Pedido pedido) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(pedidoService.guardarOActualizar(pedido));
     }
 
     @PatchMapping("/{id}/estado")
     public ResponseEntity<Pedido> actualizarEstado(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        String nuevoEstado = body.get("estado");
-        String courier = body.get("courier");
-        return ResponseEntity.ok(pedidoService.actualizarEstado(id, nuevoEstado, courier));
+        return ResponseEntity.ok(pedidoService.actualizarEstado(id, body.get("estado")));
     }
 
-    @PostMapping("/{id}/incidencias")
-    public ResponseEntity<Pedido> reportarIncidencia(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        String descripcion = body.get("descripcion");
-        return ResponseEntity.ok(pedidoService.reportarIncidencia(id, descripcion));
+    @PatchMapping("/{id}/incidencia")
+    public ResponseEntity<Pedido> actualizarIncidencia(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(pedidoService.actualizarIncidencia(id, body.get("incidencia")));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        pedidoService.eliminarPedido(id);
+        return ResponseEntity.noContent().build();
     }
 }

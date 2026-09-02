@@ -18,6 +18,17 @@ export interface Pedido {
   incidencia?: string;
 }
 
+export interface Producto {
+  id?: number;
+  sku: string;
+  nombre: string;
+  descripcion: string;
+  categoria: string;
+  precio: number;
+  stock: number;
+  stockMinimo: number;
+}
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -31,25 +42,24 @@ export class AppComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
 
+  moduloActivo: 'PEDIDOS' | 'PRODUCTOS' = 'PEDIDOS';
+
   isLoggedIn = true;
   userName = 'Usuario Evaluador (Azure)';
   rolSeleccionado: 'OPERADOR' | 'ADMIN' = 'ADMIN';
   pedidos: Pedido[] = [];
+  productos: Producto[] = [];
   cargando = false;
-
   notificacionReciente: string = '';
 
-  estadosDisponibles: string[] = [
-    'En Preparacion',
-    'En Transito',
-    'En Reparto',
-    'Incidencia en Ruta',
-    'Entregado'
-  ];
+  private apiPedidosUrl = environment.apiUrl;
+  private apiProductosUrl = environment.apiUrl.replace('/pedidos', '/productos');
 
+  estadosDisponibles: string[] = ['En Preparacion', 'En Transito', 'En Reparto', 'Incidencia en Ruta', 'Entregado'];
   couriersDisponibles: string[] = ['Blue Express', 'Chilexpress', 'Flota Propia'];
 
   mostrarFormularioCreacion = false;
+  mostrarFormularioProducto = false;
   pedidoEnEdicion: Pedido | null = null;
   pedidoParaIncidencia: Pedido | null = null;
   detalleIncidenciaTemp = '';
@@ -63,178 +73,84 @@ export class AppComponent implements OnInit {
     destino: 'Santiago Centro'
   };
 
-  async ngOnInit(): Promise<void> {
+  nuevoProducto: Producto = {
+    sku: '',
+    nombre: '',
+    descripcion: '',
+    categoria: 'Abarrotes',
+    precio: 0,
+    stock: 10,
+    stockMinimo: 5
+  };
+
+  ngOnInit(): void {
     this.cargarCacheLocal();
-
-    try {
-      await this.msalService.instance.initialize();
-      const resultado = await this.msalService.instance.handleRedirectPromise();
-
-      if (resultado && resultado.account) {
-        this.msalService.instance.setActiveAccount(resultado.account);
-      }
-
-      const cuentaActiva = this.msalService.instance.getActiveAccount() || this.msalService.instance.getAllAccounts()[0];
-
-      if (cuentaActiva) {
-        this.userName = cuentaActiva.name || cuentaActiva.username;
-      }
-    } catch (err) {
-      console.warn('MSAL en modo público/evaluación:', err);
-    }
-
-    // Mantiene la vista desbloqueada para la evaluación pública
-    this.isLoggedIn = true;
-    this.cdr.detectChanges();
     this.obtenerPedidos();
-  }
+    this.obtenerProductos();
 
-  private normalizarPedido(p: any, index: number = 0): Pedido {
-    const defaultCouriers = ['Blue Express', 'Chilexpress', 'Flota Propia'];
-    const defaultDestinos = ['Santiago Centro', 'Pudahuel', 'Maipú', 'Providencia', 'Las Condes'];
-    
-    return {
-      id: p.id || (index + 1),
-      tracking: p.tracking && p.tracking.trim() !== '' 
-        ? p.tracking 
-        : `TRK-CL-${1000 + (p.id ? p.id * 137 : (index + 1) * 219)}`,
-      cliente: p.cliente || 'Cliente sin registrar',
-      producto: p.producto || 'Insumo Logistico',
-      cantidad: p.cantidad || 1,
-      total: p.total || 0,
-      courier: p.courier && p.courier.trim() !== '' 
-        ? p.courier 
-        : defaultCouriers[index % defaultCouriers.length],
-      destino: p.destino && p.destino.trim() !== '' 
-        ? p.destino 
-        : defaultDestinos[index % defaultDestinos.length],
-      estado: p.estado || 'En Preparacion',
-      incidencia: p.incidencia || ''
-    };
-  }
-
-  cargarCacheLocal(): void {
-    const cache = localStorage.getItem('pedidos_app_data');
-    if (cache) {
-      try {
-        const datos = JSON.parse(cache);
-        this.pedidos = datos.map((item: any, idx: number) => this.normalizarPedido(item, idx));
-      } catch {
-        this.pedidos = [];
-      }
-    }
-    const notif = localStorage.getItem('pedidos_notificacion');
-    if (notif) {
-      this.notificacionReciente = notif;
-    }
-  }
-
-  guardarCacheLocal(): void {
-    localStorage.setItem('pedidos_app_data', JSON.stringify(this.pedidos));
-    if (this.notificacionReciente) {
-      localStorage.setItem('pedidos_notificacion', this.notificacionReciente);
-    }
-  }
-
-  descartarNotificacion(): void {
-    this.notificacionReciente = '';
-    localStorage.removeItem('pedidos_notificacion');
-  }
-
-  toggleFormulario(): void {
-    this.mostrarFormularioCreacion = !this.mostrarFormularioCreacion;
-  }
-
-  enmascararNombre(nombreCompleto: string): string {
-    if (!nombreCompleto) return '';
-    if (this.rolSeleccionado === 'ADMIN') return nombreCompleto;
-
-    const partes = nombreCompleto.split(' ');
-    if (partes.length === 1) return partes[0].charAt(0) + '****';
-    return `${partes[0]} ${partes[1].charAt(0)}****`;
-  }
-
-  cambiarRol(nuevoRol: 'OPERADOR' | 'ADMIN'): void {
-    this.rolSeleccionado = nuevoRol;
-    this.cdr.detectChanges();
-  }
-
-  guardarNuevoPedido(): void {
-    if (this.rolSeleccionado !== 'ADMIN') return;
-    if (!this.nuevoPedido.cliente.trim() || !this.nuevoPedido.destino.trim()) {
-      alert('Por favor ingrese el nombre del cliente y la comuna de destino.');
-      return;
-    }
-
-    const payload: Pedido = {
-      tracking: `TRK-CL-${Math.floor(1000 + Math.random() * 9000)}`,
-      cliente: this.nuevoPedido.cliente.trim(),
-      producto: this.nuevoPedido.producto,
-      cantidad: Number(this.nuevoPedido.cantidad),
-      total: Number(this.nuevoPedido.total),
-      courier: this.nuevoPedido.courier,
-      destino: this.nuevoPedido.destino.trim(),
-      estado: 'En Preparacion'
-    };
-
-    this.http.post<Pedido>(environment.apiUrl, payload).subscribe({
-      next: (creado) => {
-        this.ngZone.run(() => {
-          this.pedidos.unshift(this.normalizarPedido(creado));
-          this.notificacionReciente = `Nueva guia creada: ${payload.tracking} con destino a ${payload.destino}`;
-          this.guardarCacheLocal();
-          this.resetFormulario();
-        });
-      },
-      error: () => {
-        this.ngZone.run(() => {
-          const localId = this.pedidos.length > 0 ? Math.max(...this.pedidos.map(p => p.id || 0)) + 1 : 1;
-          this.pedidos.unshift({ ...payload, id: localId });
-          this.notificacionReciente = `Nueva guia creada: ${payload.tracking} con destino a ${payload.destino}`;
-          this.guardarCacheLocal();
-          this.resetFormulario();
-        });
-      }
+    // Inicializacion de MSAL encapsulada para no perder la zona de Angular
+    this.msalService.instance.initialize().then(() => {
+      return this.msalService.instance.handleRedirectPromise();
+    }).then((resultado) => {
+      this.ngZone.run(() => {
+        if (resultado && resultado.account) {
+          this.msalService.instance.setActiveAccount(resultado.account);
+        }
+        const cuentaActiva = this.msalService.instance.getActiveAccount() || this.msalService.instance.getAllAccounts()[0];
+        if (cuentaActiva) {
+          this.userName = cuentaActiva.name || cuentaActiva.username;
+        }
+        this.cdr.detectChanges();
+      });
+    }).catch((err) => {
+      console.warn('MSAL en modo publico/evaluacion:', err);
     });
   }
 
-  private resetFormulario(): void {
-    this.nuevoPedido = {
-      cliente: '',
-      producto: 'Notebook Corporativo HP G8',
-      cantidad: 1,
-      total: 450000,
-      courier: 'Blue Express',
-      destino: 'Santiago Centro'
-    };
-    this.mostrarFormularioCreacion = false;
-    this.cdr.detectChanges();
+  cambiarModulo(modulo: 'PEDIDOS' | 'PRODUCTOS'): void {
+    this.ngZone.run(() => {
+      this.moduloActivo = modulo;
+      this.cdr.detectChanges();
+    });
   }
 
+  // --- MODAL DE EDICION GENERAL (RESPUESTA INSTANTANEA) ---
   abrirModalEditar(pedido: Pedido): void {
-    this.pedidoEnEdicion = { ...pedido };
+    this.ngZone.run(() => {
+      this.pedidoEnEdicion = { ...pedido };
+      this.cdr.detectChanges();
+    });
   }
 
   cerrarModalEditar(): void {
-    this.pedidoEnEdicion = null;
-  }
-
-  guardarEdicion(): void {
-    if (!this.pedidoEnEdicion || !this.pedidoEnEdicion.id) return;
-
-    const editado = this.pedidoEnEdicion;
-    this.http.post<Pedido>(environment.apiUrl, editado).subscribe({
-      next: () => this.aplicarCambioEdicionLocal(editado),
-      error: () => this.aplicarCambioEdicionLocal(editado)
+    this.ngZone.run(() => {
+      this.pedidoEnEdicion = null;
+      this.cdr.detectChanges();
     });
   }
 
-  private aplicarCambioEdicionLocal(editado: Pedido): void {
+  guardarEdicion(): void {
+    if (!this.pedidoEnEdicion?.id) return;
+
+    const editado = { ...this.pedidoEnEdicion };
+    if (editado.incidencia && editado.incidencia.trim() !== '') {
+      editado.estado = 'Incidencia en Ruta';
+    } else if (editado.estado === 'Incidencia en Ruta') {
+      editado.estado = 'En Transito';
+    }
+
+    this.http.post<Pedido>(this.apiPedidosUrl, editado).subscribe({
+      next: () => this.aplicarEdicionLocal(editado),
+      error: () => this.aplicarEdicionLocal(editado)
+    });
+  }
+
+  private aplicarEdicionLocal(editado: Pedido): void {
     this.ngZone.run(() => {
       const idx = this.pedidos.findIndex(p => p.id === editado.id);
       if (idx !== -1) {
         this.pedidos[idx] = { ...editado };
-        this.notificacionReciente = `La orden ${editado.tracking} ha sido actualizada`;
+        this.notificacionReciente = `Orden ${editado.tracking} actualizada correctamente`;
         this.guardarCacheLocal();
       }
       this.pedidoEnEdicion = null;
@@ -242,34 +158,37 @@ export class AppComponent implements OnInit {
     });
   }
 
+  // --- MODAL DE INCIDENCIAS (RESPUESTA INSTANTANEA) ---
   abrirModalIncidencia(pedido: Pedido): void {
-    this.pedidoParaIncidencia = pedido;
-    this.detalleIncidenciaTemp = pedido.incidencia || '';
+    this.ngZone.run(() => {
+      this.pedidoParaIncidencia = pedido;
+      this.detalleIncidenciaTemp = pedido.incidencia || '';
+      this.cdr.detectChanges();
+    });
   }
 
   cerrarModalIncidencia(): void {
-    this.pedidoParaIncidencia = null;
-    this.detalleIncidenciaTemp = '';
+    this.ngZone.run(() => {
+      this.pedidoParaIncidencia = null;
+      this.detalleIncidenciaTemp = '';
+      this.cdr.detectChanges();
+    });
   }
 
   guardarIncidencia(): void {
-    if (!this.pedidoParaIncidencia || !this.pedidoParaIncidencia.id) return;
+    if (!this.pedidoParaIncidencia?.id) return;
 
     const id = this.pedidoParaIncidencia.id;
     const motivo = this.detalleIncidenciaTemp.trim();
+    const nuevoEstado = motivo ? 'Incidencia en Ruta' : 'En Transito';
     const tracking = this.pedidoParaIncidencia.tracking;
 
-    this.http.patch<Pedido>(`${environment.apiUrl}/${id}/incidencia`, { incidencia: motivo }).subscribe({
-      next: (resp) => {
-        this.ngZone.run(() => {
-          this.aplicarCambioIncidenciaLocal(id, resp.incidencia, resp.estado, tracking);
-        });
+    this.http.patch<Pedido>(`${this.apiPedidosUrl}/${id}/incidencia`, { incidencia: motivo }).subscribe({
+      next: () => {
+        this.aplicarCambioIncidenciaLocal(id, motivo || undefined, nuevoEstado, tracking);
       },
       error: () => {
-        this.ngZone.run(() => {
-          const nuevoEstado = motivo ? 'Incidencia en Ruta' : 'En Transito';
-          this.aplicarCambioIncidenciaLocal(id, motivo || undefined, nuevoEstado, tracking);
-        });
+        this.aplicarCambioIncidenciaLocal(id, motivo || undefined, nuevoEstado, tracking);
       }
     });
   }
@@ -279,56 +198,82 @@ export class AppComponent implements OnInit {
     this.guardarIncidencia();
   }
 
-  private aplicarCambioIncidenciaLocal(id: number, incidencia: string | undefined, estado: string, tracking: string): void {
-    const item = this.pedidos.find(p => p.id === id);
-    if (item) {
-      item.incidencia = incidencia;
-      item.estado = estado;
-      this.notificacionReciente = incidencia 
-        ? `Alerta en ruta [${tracking}]: ${incidencia}` 
-        : `Incidencia solucionada para la guia [${tracking}]`;
-      this.guardarCacheLocal();
-    }
-    this.cerrarModalIncidencia();
-    this.cdr.detectChanges();
-  }
-
-  cambiarEstado(pedido: Pedido, nuevoEstado: string): void {
-    if (this.rolSeleccionado !== 'ADMIN' || !pedido.id) return;
-
-    pedido.estado = nuevoEstado;
-    this.notificacionReciente = `Guia ${pedido.tracking} paso a estado: ${nuevoEstado}`;
-    this.guardarCacheLocal();
-
-    this.http.patch<Pedido>(`${environment.apiUrl}/${pedido.id}/estado`, { estado: nuevoEstado }).subscribe({
-      next: () => {},
-      error: () => {}
-    });
-  }
-
-  eliminarPedido(id: number | undefined, tracking: string): void {
-    if (!id || this.rolSeleccionado !== 'ADMIN') return;
-
-    if (confirm(`Confirma ejercicio del Derecho de Supresion ARCO para la guia ${tracking}`)) {
-      this.http.delete(`${environment.apiUrl}/${id}`).subscribe({
-        next: () => this.removerLocal(id, tracking),
-        error: () => this.removerLocal(id, tracking)
-      });
-    }
-  }
-
-  private removerLocal(id: number, tracking: string): void {
+  private aplicarCambioIncidenciaLocal(id: number, motivo: string | undefined, nuevoEstado: string, tracking: string): void {
     this.ngZone.run(() => {
-      this.pedidos = this.pedidos.filter(p => p.id !== id);
-      this.notificacionReciente = `Registro suprimido: ${tracking} fue eliminado definitivamente`;
-      this.guardarCacheLocal();
+      const item = this.pedidos.find(p => p.id === id);
+      if (item) {
+        item.incidencia = motivo;
+        item.estado = nuevoEstado;
+        this.notificacionReciente = motivo 
+          ? `Incidencia actualizada en guia [${tracking}]: ${motivo}` 
+          : `Incidencia resuelta para la guia [${tracking}]`;
+        this.guardarCacheLocal();
+      }
+      this.pedidoParaIncidencia = null;
+      this.detalleIncidenciaTemp = '';
       this.cdr.detectChanges();
     });
   }
 
+  // --- GESTION DE PRODUCTOS (MODULO 1) ---
+  obtenerProductos(): void {
+    this.http.get<Producto[]>(this.apiProductosUrl).subscribe({
+      next: (data) => {
+        this.ngZone.run(() => {
+          this.productos = data || [];
+          this.cdr.detectChanges();
+        });
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          if (this.productos.length === 0) {
+            this.productos = [
+              { id: 1, sku: 'ASEO-001', nombre: 'Detergente Industrial 5L', descripcion: 'Bidon concentrado', categoria: 'Aseo', precio: 12990, stock: 45, stockMinimo: 10 },
+              { id: 2, sku: 'ASEO-002', nombre: 'Cloro Gel Desinfectante 1L', descripcion: 'Envase individual', categoria: 'Aseo', precio: 2490, stock: 4, stockMinimo: 15 },
+              { id: 3, sku: 'ABAR-001', nombre: 'Arroz Grado 1 (1kg)', descripcion: 'Bolsa individual', categoria: 'Abarrotes', precio: 1350, stock: 120, stockMinimo: 20 }
+            ];
+          }
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  guardarNuevoProducto(): void {
+    if (!this.nuevoProducto.sku.trim() || !this.nuevoProducto.nombre.trim()) {
+      alert('Debe ingresar SKU y Nombre del producto.');
+      return;
+    }
+
+    this.http.post<Producto>(this.apiProductosUrl, this.nuevoProducto).subscribe({
+      next: (creado) => {
+        this.ngZone.run(() => {
+          this.productos.unshift(creado);
+          this.notificacionReciente = `Producto registrado: ${creado.nombre} (${creado.sku})`;
+          this.resetFormularioProducto();
+        });
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          const localProd = { ...this.nuevoProducto, id: Date.now() };
+          this.productos.unshift(localProd);
+          this.notificacionReciente = `Producto guardado: ${localProd.nombre}`;
+          this.resetFormularioProducto();
+        });
+      }
+    });
+  }
+
+  resetFormularioProducto(): void {
+    this.nuevoProducto = { sku: '', nombre: '', descripcion: '', categoria: 'Abarrotes', precio: 0, stock: 10, stockMinimo: 5 };
+    this.mostrarFormularioProducto = false;
+    this.cdr.detectChanges();
+  }
+
+  // --- GESTION DE PEDIDOS (MODULO 2) ---
   obtenerPedidos(): void {
     this.cargando = true;
-    this.http.get<Pedido[]>(environment.apiUrl).subscribe({
+    this.http.get<Pedido[]>(this.apiPedidosUrl).subscribe({
       next: (data) => {
         this.ngZone.run(() => {
           if (data && data.length > 0) {
@@ -349,18 +294,132 @@ export class AppComponent implements OnInit {
     });
   }
 
-  login(): void {
-    this.isLoggedIn = true;
-    this.userName = 'Usuario Evaluador (Azure)';
-    this.obtenerPedidos();
+  private normalizarPedido(p: any, index: number = 0): Pedido {
+    return {
+      id: p.id || (index + 1),
+      tracking: p.tracking || `TRK-CL-${1000 + (index + 1) * 219}`,
+      cliente: p.cliente || 'Cliente sin registrar',
+      producto: p.producto || 'Insumo Logistico',
+      cantidad: p.cantidad || 1,
+      total: p.total || 0,
+      courier: p.courier || 'Blue Express',
+      destino: p.destino || 'Santiago Centro',
+      estado: p.estado || 'En Preparacion',
+      incidencia: p.incidencia || ''
+    };
+  }
+
+  guardarNuevoPedido(): void {
+    if (this.rolSeleccionado !== 'ADMIN') return;
+    if (!this.nuevoPedido.cliente.trim() || !this.nuevoPedido.destino.trim()) {
+      alert('Debe ingresar cliente y destino.');
+      return;
+    }
+
+    const payload: Pedido = {
+      tracking: `TRK-CL-${Math.floor(1000 + Math.random() * 9000)}`,
+      cliente: this.nuevoPedido.cliente.trim(),
+      producto: this.nuevoPedido.producto,
+      cantidad: Number(this.nuevoPedido.cantidad),
+      total: Number(this.nuevoPedido.total),
+      courier: this.nuevoPedido.courier,
+      destino: this.nuevoPedido.destino.trim(),
+      estado: 'En Preparacion'
+    };
+
+    this.http.post<Pedido>(this.apiPedidosUrl, payload).subscribe({
+      next: (creado) => {
+        this.ngZone.run(() => {
+          this.pedidos.unshift(this.normalizarPedido(creado));
+          this.notificacionReciente = `Guia creada: ${payload.tracking}`;
+          this.guardarCacheLocal();
+          this.resetFormulario();
+        });
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          this.pedidos.unshift({ ...payload, id: Date.now() });
+          this.notificacionReciente = `Guia creada: ${payload.tracking}`;
+          this.guardarCacheLocal();
+          this.resetFormulario();
+        });
+      }
+    });
+  }
+
+  // --- SOPORTE Y CONTROL DE ACCESO (ARCO) ---
+  enmascararNombre(nombre: string): string {
+    if (!nombre) return '';
+    if (this.rolSeleccionado === 'ADMIN') return nombre;
+    const partes = nombre.split(' ');
+    return partes.length === 1 ? partes[0].charAt(0) + '****' : `${partes[0]} ${partes[1].charAt(0)}****`;
+  }
+
+  cambiarRol(nuevoRol: 'OPERADOR' | 'ADMIN'): void {
+    this.ngZone.run(() => {
+      this.rolSeleccionado = nuevoRol;
+      this.cdr.detectChanges();
+    });
+  }
+
+  cambiarEstado(pedido: Pedido, nuevoEstado: string): void {
+    this.ngZone.run(() => {
+      pedido.estado = nuevoEstado;
+      this.cdr.detectChanges();
+    });
+    this.http.patch(`${this.apiPedidosUrl}/${pedido.id}/estado`, { estado: nuevoEstado }).subscribe();
+  }
+
+  eliminarPedido(id: number | undefined, tracking: string): void {
+    if (!id || this.rolSeleccionado !== 'ADMIN') return;
+    if (confirm(`Confirma ejercicio del Derecho de Supresion ARCO para la guia ${tracking}`)) {
+      this.http.delete(`${this.apiPedidosUrl}/${id}`).subscribe({
+        next: () => this.removerLocal(id, tracking),
+        error: () => this.removerLocal(id, tracking)
+      });
+    }
+  }
+
+  private removerLocal(id: number, tracking: string): void {
+    this.ngZone.run(() => {
+      this.pedidos = this.pedidos.filter(p => p.id !== id);
+      this.notificacionReciente = `Registro suprimido (ARCO): ${tracking}`;
+      this.guardarCacheLocal();
+      this.cdr.detectChanges();
+    });
+  }
+
+  toggleFormulario(): void {
+    this.ngZone.run(() => {
+      this.mostrarFormularioCreacion = !this.mostrarFormularioCreacion;
+      this.cdr.detectChanges();
+    });
+  }
+
+  resetFormulario(): void {
+    this.nuevoPedido = { cliente: '', producto: 'Notebook Corporativo HP G8', cantidad: 1, total: 450000, courier: 'Blue Express', destino: 'Santiago Centro' };
+    this.mostrarFormularioCreacion = false;
     this.cdr.detectChanges();
   }
 
-  logout(): void {
-    this.msalService.instance.setActiveAccount(null);
-    sessionStorage.clear();
-    localStorage.removeItem('pedidos_notificacion');
-    this.userName = 'Usuario Invitado';
-    this.cdr.detectChanges();
+  cargarCacheLocal(): void {
+    const cache = localStorage.getItem('pedidos_app_data');
+    if (cache) this.pedidos = JSON.parse(cache);
   }
+
+  guardarCacheLocal(): void { 
+    localStorage.setItem('pedidos_app_data', JSON.stringify(this.pedidos)); 
+  }
+
+  descartarNotificacion(): void {
+    this.ngZone.run(() => {
+      this.notificacionReciente = '';
+      this.cdr.detectChanges();
+    });
+  }
+
+  getCount(estado: string): number { return this.pedidos.filter(p => p.estado === estado).length; }
+  getCountRuta(): number { return this.pedidos.filter(p => p.estado === 'En Transito' || p.estado === 'En Reparto').length; }
+  getCountIncidencias(): number { return this.pedidos.filter(p => p.estado === 'Incidencia en Ruta' || (p.incidencia && p.incidencia.trim() !== '')).length; }
+  getAlertasStockCount(): number { return this.productos.filter(p => p.stock <= p.stockMinimo).length; }
 }
