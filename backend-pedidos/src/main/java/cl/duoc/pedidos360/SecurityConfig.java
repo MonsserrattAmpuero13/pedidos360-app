@@ -26,7 +26,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/pedidos/**").permitAll() // Permite el tráfico REST
+                .requestMatchers("/api/pedidos/**", "/api/productos/**").permitAll() // Permite el tráfico REST
                 .anyRequest().permitAll()
             );
 
