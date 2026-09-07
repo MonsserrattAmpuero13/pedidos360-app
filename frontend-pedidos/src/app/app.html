@@ -1,44 +1,102 @@
-<div class="contenedor-principal">
+<!-- ================= VISTA PÚBLICA: LANDING PAGE ================= -->
+<div *ngIf="!(auth.isAuthenticated$ | async)" style="min-height: 100vh; display: flex; flex-direction: column; background: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  
+  <header style="padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155;">
+    <div style="font-size: 1.5rem; font-weight: 700; color: #38bdf8;">
+      Pedidos 360
+    </div>
+    <button (click)="login()" style="background-color: #0284c7; color: white; border: none; border-radius: 6px; padding: 0.6rem 1.4rem; font-size: 0.95rem; font-weight: 600; cursor: pointer;">
+      Iniciar Sesión
+    </button>
+  </header>
+
+  <main style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 3rem 1.5rem;">
+    <span style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; padding: 0.4rem 1rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1.5rem; border: 1px solid rgba(56, 189, 248, 0.2);">
+      Logistica Distribuidora ANDES
+    </span>
+
+    <h1 style="font-size: 2.8rem; font-weight: 800; max-width: 750px; line-height: 1.2; margin: 0 0 1.2rem 0;">
+      Control total de envíos, trazabilidad e inventario en tiempo real
+    </h1>
+
+    <p style="font-size: 1.15rem; color: #94a3b8; max-width: 600px; margin: 0 0 2.5rem 0; line-height: 1.6;">
+      Gestión centralizada de pedidos con integración a couriers, seguimiento de incidencias en ruta y auditoría de datos bajo estándares de seguridad.
+    </p>
+
+    <div>
+      <button (click)="login()" style="background-color: #0284c7; color: white; border: none; border-radius: 8px; padding: 0.9rem 2rem; font-size: 1.05rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);">
+        Ingresar al Sistema
+      </button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; max-width: 900px; width: 100%; margin-top: 4rem; text-align: left;">
+      <div style="background: #1e293b; padding: 1.5rem; border-radius: 8px; border: 1px solid #334155;">
+        <h4 style="margin: 0 0 0.5rem 0; color: #38bdf8; font-size: 1.1rem;">Trazabilidad 360</h4>
+        <p style="margin: 0; color: #94a3b8; font-size: 0.9rem; line-height: 1.4;">Control de estados de entrega, guías y despacho con múltiples operadores logísticos.</p>
+      </div>
+      <div style="background: #1e293b; padding: 1.5rem; border-radius: 8px; border: 1px solid #334155;">
+        <h4 style="margin: 0 0 0.5rem 0; color: #38bdf8; font-size: 1.1rem;">Gestión de Incidencias</h4>
+        <p style="margin: 0; color: #94a3b8; font-size: 0.9rem; line-height: 1.4;">Resolución inmediata de alertas en ruta y reasignación de órdenes en tránsito.</p>
+      </div>
+      <div style="background: #1e293b; padding: 1.5rem; border-radius: 8px; border: 1px solid #334155;">
+        <h4 style="margin: 0 0 0.5rem 0; color: #38bdf8; font-size: 1.1rem;">Autenticación Segura</h4>
+        <p style="margin: 0; color: #94a3b8; font-size: 0.9rem; line-height: 1.4;">Acceso protegido mediante tokens JWT firmados y control de roles RBAC.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer style="padding: 1.5rem; text-align: center; font-size: 0.85rem; color: #64748b; border-top: 1px solid #1e293b;">
+    Pedidos 360 - Sistema de Gestión Logística
+  </footer>
+</div>
+
+<!-- ================= VISTA PRIVADA: SISTEMA COMPLETO ================= -->
+<div *ngIf="auth.isAuthenticated$ | async" class="contenedor-principal">
   <!-- Barra Superior -->
   <header class="navbar">
     <div class="brand">
       <h2>Pedidos 360</h2>
     </div>
 
-    <!-- Navegacion de Modulos -->
     <nav class="nav-modulos">
       <button [class.activo]="moduloActivo === 'PEDIDOS'" (click)="cambiarModulo('PEDIDOS')">
-        Despachos y Envios
+        Despachos y Envíos
       </button>
       <button [class.activo]="moduloActivo === 'PRODUCTOS'" (click)="cambiarModulo('PRODUCTOS')">
         Inventario de Productos
       </button>
     </nav>
 
-    <div class="usuario-seccion">
-      <div class="selector-rol">
-        <label>Rol:</label>
-        <button [class.activo]="rolSeleccionado === 'ADMIN'" (click)="cambiarRol('ADMIN')">ADMIN</button>
-        <button [class.activo]="rolSeleccionado === 'OPERADOR'" (click)="cambiarRol('OPERADOR')">OPERADOR</button>
-      </div>
+    <div class="usuario-seccion" style="display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 0.85rem; color: #cbd5e1; font-weight: 500;">
+        Usuario: {{ (auth.user$ | async)?.name || (auth.user$ | async)?.email || userName }}
+      </span>
+
+      <span style="background: #1e293b; border: 1px solid #475569; color: #38bdf8; font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; letter-spacing: 0.5px;">
+        ROL: {{ rolSeleccionado }}
+      </span>
+
+      <button (click)="logout()" style="background-color: #ef4444; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+        Cerrar Sesión
+      </button>
     </div>
   </header>
 
-  <!-- Banner de Notificacion -->
+  <!-- Banner de Notificación -->
   <div *ngIf="notificacionReciente" class="alerta-banner">
     <span>{{ notificacionReciente }}</span>
     <button (click)="descartarNotificacion()" class="btn-cerrar">Cerrar</button>
   </div>
 
   <main class="contenido">
-    <!-- Panel de Metricas Generales -->
-    <section class="grid-metricas">
+    <!-- Panel de Métricas: Administrador (Control Global) -->
+    <section *ngIf="rolSeleccionado === 'ADMIN'" class="grid-metricas">
       <div class="card-metrica">
-        <span class="metrica-label">Total Envios</span>
+        <span class="metrica-label">Total Envíos</span>
         <span class="metrica-valor">{{ pedidos.length }}</span>
       </div>
       <div class="card-metrica pendientes">
-        <span class="metrica-label">En Preparacion</span>
+        <span class="metrica-label">En Preparación</span>
         <span class="metrica-valor">{{ getCount('En Preparacion') }}</span>
       </div>
       <div class="card-metrica ruta">
@@ -55,24 +113,117 @@
       </div>
     </section>
 
+    <!-- Panel de Métricas: Bodega (Solo Métricas Físicas de Almacén) -->
+    <section *ngIf="rolSeleccionado === 'OPERADOR'" class="grid-metricas">
+      <div class="card-metrica">
+        <span class="metrica-label">Pedidos Recibidos</span>
+        <span class="metrica-valor">{{ getCount('En Preparacion') + getCount('Listo para Despacho') }}</span>
+      </div>
+      <div class="card-metrica pendientes">
+        <span class="metrica-label">En Preparación</span>
+        <span class="metrica-valor">{{ getCount('En Preparacion') }}</span>
+      </div>
+      <div class="card-metrica" style="border-top: 4px solid #10b981;">
+        <span class="metrica-label">Pedidos Armados</span>
+        <span class="metrica-valor" style="color: #10b981;">{{ getCount('Listo para Despacho') }}</span>
+      </div>
+    </section>
+
     <!-- ================= VISTA 1: DESPACHOS ================= -->
     <div *ngIf="moduloActivo === 'PEDIDOS'">
+
+      <!-- GRÁFICO VISUAL DE DISTRIBUCIÓN POR ESTADOS (Solo Administrador) -->
+      <section *ngIf="rolSeleccionado === 'ADMIN'" style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+          <div>
+            <h4 style="margin: 0; color: #38bdf8; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+              Gráfico de Distribución del Ciclo de Envíos
+            </h4>
+            <span style="font-size: 0.8rem; color: #94a3b8;">Volumen relativo por etapa operativa</span>
+          </div>
+          <span style="font-size: 0.85rem; color: #cbd5e1; background: #0f172a; padding: 4px 10px; border-radius: 4px; border: 1px solid #334155;">
+            Total: {{ pedidos.length }} órdenes
+          </span>
+        </div>
+
+        <!-- Gráfico de Columnas / Barras Dinámicas -->
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; height: 160px; align-items: end; padding: 1rem 0; border-bottom: 1px solid #334155;">
+          
+          <!-- Columna: En Preparación -->
+          <div style="display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;">
+            <span style="font-size: 0.8rem; font-weight: 700; color: #facc15; margin-bottom: 6px;">
+              {{ getCount('En Preparacion') }} ({{ getPorcentaje(getCount('En Preparacion')) }}%)
+            </span>
+            <div [style.height.%]="getPorcentaje(getCount('En Preparacion')) || 8" style="width: 70%; background: linear-gradient(180deg, #facc15, #ca8a04); border-radius: 4px 4px 0 0; min-height: 8px; transition: height 0.4s ease;"></div>
+            <span style="font-size: 0.75rem; color: #cbd5e1; margin-top: 8px; text-align: center;">Preparación</span>
+          </div>
+
+          <!-- Columna: Listo para Despacho -->
+          <div style="display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;">
+            <span style="font-size: 0.8rem; font-weight: 700; color: #34d399; margin-bottom: 6px;">
+              {{ getCount('Listo para Despacho') }} ({{ getPorcentaje(getCount('Listo para Despacho')) }}%)
+            </span>
+            <div [style.height.%]="getPorcentaje(getCount('Listo para Despacho')) || 8" style="width: 70%; background: linear-gradient(180deg, #34d399, #059669); border-radius: 4px 4px 0 0; min-height: 8px; transition: height 0.4s ease;"></div>
+            <span style="font-size: 0.75rem; color: #cbd5e1; margin-top: 8px; text-align: center;">Armado</span>
+          </div>
+
+          <!-- Columna: En Ruta -->
+          <div style="display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;">
+            <span style="font-size: 0.8rem; font-weight: 700; color: #60a5fa; margin-bottom: 6px;">
+              {{ getCountRuta() }} ({{ getPorcentaje(getCountRuta()) }}%)
+            </span>
+            <div [style.height.%]="getPorcentaje(getCountRuta()) || 8" style="width: 70%; background: linear-gradient(180deg, #60a5fa, #2563eb); border-radius: 4px 4px 0 0; min-height: 8px; transition: height 0.4s ease;"></div>
+            <span style="font-size: 0.75rem; color: #cbd5e1; margin-top: 8px; text-align: center;">En Ruta</span>
+          </div>
+
+          <!-- Columna: Entregado -->
+          <div style="display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;">
+            <span style="font-size: 0.8rem; font-weight: 700; color: #a78bfa; margin-bottom: 6px;">
+              {{ getCount('Entregado') }} ({{ getPorcentaje(getCount('Entregado')) }}%)
+            </span>
+            <div [style.height.%]="getPorcentaje(getCount('Entregado')) || 8" style="width: 70%; background: linear-gradient(180deg, #a78bfa, #7c3aed); border-radius: 4px 4px 0 0; min-height: 8px; transition: height 0.4s ease;"></div>
+            <span style="font-size: 0.75rem; color: #cbd5e1; margin-top: 8px; text-align: center;">Entregado</span>
+          </div>
+
+          <!-- Columna: Incidencias -->
+          <div style="display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;">
+            <span style="font-size: 0.8rem; font-weight: 700; color: #f87171; margin-bottom: 6px;">
+              {{ getCountIncidencias() }} ({{ getPorcentaje(getCountIncidencias()) }}%)
+            </span>
+            <div [style.height.%]="getPorcentaje(getCountIncidencias()) || 8" style="width: 70%; background: linear-gradient(180deg, #f87171, #dc2626); border-radius: 4px 4px 0 0; min-height: 8px; transition: height 0.4s ease;"></div>
+            <span style="font-size: 0.75rem; color: #cbd5e1; margin-top: 8px; text-align: center;">Incidencias</span>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- BARRA DE CONTROL CON CLASIFICACIÓN POR ESTADO -->
       <div class="toolbar">
         <div class="info-pedidos">
-          <h3>Gestion de Envios y Trazabilidad</h3>
-          <p>{{ pedidos.length }} ordenes registradas</p>
+          <h3>{{ rolSeleccionado === 'ADMIN' ? 'Gestión de Envíos y Trazabilidad' : 'Mesa de Armado y Picking' }}</h3>
+          <p>{{ pedidosFiltrados.length }} órdenes mostradas</p>
         </div>
-        <div class="acciones-toolbar">
+
+        <div class="acciones-toolbar" style="display: flex; gap: 0.75rem; align-items: center;">
+          <!-- Filtro de Clasificación por Estado (Solo Administrador) -->
+          <div *ngIf="rolSeleccionado === 'ADMIN'" style="display: flex; align-items: center; gap: 0.5rem;">
+            <label style="font-size: 0.85rem; color: #94a3b8; font-weight: 600;">Estado:</label>
+            <select [(ngModel)]="filtroEstadoSeleccionado" style="background: #1e293b; color: white; border: 1px solid #475569; padding: 0.45rem 0.75rem; border-radius: 6px; font-size: 0.85rem; cursor: pointer;">
+              <option value="TODOS">Todos los Estados</option>
+              <option *ngFor="let est of estadosDisponibles" [value]="est">{{ est }}</option>
+            </select>
+          </div>
+
           <button (click)="obtenerPedidos()" class="btn-secundario">Recargar</button>
           <button *ngIf="rolSeleccionado === 'ADMIN'" (click)="toggleFormulario()" class="btn-primario">
-            {{ mostrarFormularioCreacion ? 'Cancelar' : '+ Nueva Guia' }}
+            {{ mostrarFormularioCreacion ? 'Cancelar' : '+ Nueva Guía' }}
           </button>
         </div>
       </div>
 
-      <!-- Formulario Nueva Guia -->
+      <!-- Formulario Nueva Guía (Solo ADMIN) -->
       <section *ngIf="mostrarFormularioCreacion && rolSeleccionado === 'ADMIN'" class="card-formulario">
-        <h4>Registrar Nuevo Envio</h4>
+        <h4>Registrar Nuevo Envío</h4>
         <div class="grid-form">
           <div class="campo">
             <label>Cliente:</label>
@@ -104,54 +255,95 @@
           </div>
         </div>
         <div class="acciones-form">
-          <button (click)="guardarNuevoPedido()" class="btn-guardar">Generar Guia</button>
+          <button (click)="guardarNuevoPedido()" class="btn-guardar">Generar Guía</button>
         </div>
       </section>
 
-      <!-- Tabla de Envios -->
+      <!-- Tabla de Envíos: Protección PII y Control Operativo Estricto -->
       <section class="card-tabla">
         <table class="tabla-logistica">
           <thead>
             <tr>
               <th>Tracking</th>
-              <th>Cliente</th>
-              <th>Destino</th>
-              <th>Producto</th>
-              <th>Courier</th>
+              <th *ngIf="rolSeleccionado === 'ADMIN'">Cliente</th>
+              <th *ngIf="rolSeleccionado === 'ADMIN'">Destino</th>
+              <th>Producto Solicitado</th>
+              <th>Cantidad</th>
+              <th *ngIf="rolSeleccionado === 'ADMIN'">Courier</th>
               <th>Estado</th>
-              <th *ngIf="rolSeleccionado === 'ADMIN'">Acciones</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let p of pedidos">
+            <tr *ngFor="let p of pedidosFiltrados">
               <td class="col-tracking">{{ p.tracking }}</td>
-              <td>
-                {{ enmascararNombre(p.cliente) }}
-                <span *ngIf="rolSeleccionado === 'OPERADOR'"></span>
-              </td>
-              <td>{{ p.destino }}</td>
-              <td>{{ p.producto }} (x{{ p.cantidad }})</td>
-              <td>{{ p.courier }}</td>
+
+              <!-- PII blindada: Bodega no ve nombres ni direcciones -->
+              <td *ngIf="rolSeleccionado === 'ADMIN'">{{ p.cliente }}</td>
+              <td *ngIf="rolSeleccionado === 'ADMIN'">{{ p.destino }}</td>
+
+              <td>{{ p.producto }}</td>
+              <td><strong>{{ p.cantidad }}</strong> un.</td>
+
+              <td *ngIf="rolSeleccionado === 'ADMIN'">{{ p.courier }}</td>
+
               <td>
                 <span class="badge-estado" [ngClass]="p.estado.toLowerCase().replace(' ', '-')">
                   {{ p.estado }}
                 </span>
                 <div *ngIf="p.incidencia" class="bloque-incidencia">
                   <span class="texto-incidencia">Incidencia: {{ p.incidencia }}</span>
-                  <button *ngIf="rolSeleccionado === 'ADMIN'" (click)="abrirModalIncidencia(p)" class="btn-link-incidencia">
+                  <button (click)="abrirModalIncidencia(p)" class="btn-link-incidencia">
                     Modificar Incidencia
                   </button>
                 </div>
               </td>
-              <td *ngIf="rolSeleccionado === 'ADMIN'" class="col-acciones">
-                <select [ngModel]="p.estado" (ngModelChange)="cambiarEstado(p, $event)" class="select-estado">
-                  <option *ngFor="let est of estadosDisponibles" [value]="est">{{ est }}</option>
-                </select>
-                <button (click)="abrirModalIncidencia(p)" class="btn-accion btn-accion-incidencia">
-                  {{ p.incidencia ? 'Modificar Incidencia' : 'Reportar Incidencia' }}
-                </button>
-                <button (click)="abrirModalEditar(p)" class="btn-accion">Editar</button>
-                <button (click)="eliminarPedido(p.id, p.tracking)" class="btn-accion btn-accion-eliminar">Eliminar</button>
+
+              <td class="col-acciones">
+                <!-- Flujo Comercial y CRUD para Administrador -->
+                <ng-container *ngIf="rolSeleccionado === 'ADMIN'">
+                  <select [ngModel]="p.estado" (ngModelChange)="cambiarEstado(p, $event)" class="select-estado">
+                    <option *ngFor="let est of estadosDisponibles" [value]="est">{{ est }}</option>
+                  </select>
+                  <button (click)="abrirModalIncidencia(p)" class="btn-accion btn-accion-incidencia">
+                    {{ p.incidencia ? 'Modificar Incidencia' : 'Reportar Incidencia' }}
+                  </button>
+                  <button (click)="abrirModalEditar(p)" class="btn-accion">Editar</button>
+                  <button (click)="eliminarPedido(p.id, p.tracking)" class="btn-accion btn-accion-eliminar">Eliminar</button>
+                </ng-container>
+
+                <!-- Flujo Operativo Estricto para Bodega -->
+                <ng-container *ngIf="rolSeleccionado === 'OPERADOR'">
+                  <!-- Caso 1: En preparación (Dentro de bodega) -->
+                  <div *ngIf="p.estado === 'En Preparacion'" style="display: flex; gap: 6px;">
+                    <button (click)="cambiarEstado(p, 'Listo para Despacho')" 
+                            style="background-color: #10b981; color: white; border: none; font-weight: 600; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+                      Marcar Listo
+                    </button>
+                    <button (click)="abrirModalIncidencia(p)" 
+                            style="background-color: #f59e0b; color: white; border: none; font-weight: 600; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+                      Reportar Daño
+                    </button>
+                  </div>
+
+                  <!-- Caso 2: Empacado esperando retiro -->
+                  <div *ngIf="p.estado === 'Listo para Despacho'" style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #10b981; font-weight: 700; font-size: 0.85rem;">
+                      [Listo] Empacado (Esperando Courier)
+                    </span>
+                    <button (click)="abrirModalIncidencia(p)" 
+                            style="background-color: #f59e0b; color: white; border: none; font-weight: 600; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">
+                      Incidencia
+                    </button>
+                  </div>
+
+                  <!-- Caso 3: Fuera de bodega (Bloqueado para operario) -->
+                  <div *ngIf="p.estado !== 'En Preparacion' && p.estado !== 'Listo para Despacho'">
+                    <span style="color: #64748b; font-size: 0.85rem; font-style: italic; font-weight: 500;">
+                      Fuera de bodega (En Courier)
+                    </span>
+                  </div>
+                </ng-container>
               </td>
             </tr>
           </tbody>
@@ -163,7 +355,7 @@
     <div *ngIf="moduloActivo === 'PRODUCTOS'">
       <div class="toolbar">
         <div class="info-pedidos">
-          <h3>Catalogo e Inventario de Productos</h3>
+          <h3>Catálogo e Inventario de Productos</h3>
           <p>{{ productos.length }} productos registrados en base de datos</p>
         </div>
         <div class="acciones-toolbar">
@@ -174,16 +366,15 @@
         </div>
       </div>
 
-      <!-- Formulario Nuevo Producto -->
+      <!-- Formulario Nuevo Producto (Solo ADMIN) -->
       <section *ngIf="mostrarFormularioProducto && rolSeleccionado === 'ADMIN'" class="card-formulario">
         <h4>Registrar Producto en Inventario</h4>
         <div class="grid-form">
           <div class="campo"><label>SKU:</label><input type="text" [(ngModel)]="nuevoProducto.sku" placeholder="Ej: ELEC-005" /></div>
           <div class="campo"><label>Nombre:</label><input type="text" [(ngModel)]="nuevoProducto.nombre" placeholder="Nombre del producto" /></div>
-          <div class="campo"><label>Categoria:</label><input type="text" [(ngModel)]="nuevoProducto.categoria" placeholder="Categoria" /></div>
           <div class="campo"><label>Precio Unitario ($):</label><input type="number" [(ngModel)]="nuevoProducto.precio" /></div>
           <div class="campo"><label>Stock Actual:</label><input type="number" [(ngModel)]="nuevoProducto.stock" /></div>
-          <div class="campo"><label>Stock Minimo (Umbral Alerta):</label><input type="number" [(ngModel)]="nuevoProducto.stockMinimo" /></div>
+          <div class="campo"><label>Stock Mínimo (Umbral Alerta):</label><input type="number" [(ngModel)]="nuevoProducto.stockMinimo" /></div>
         </div>
         <div class="acciones-form"><button (click)="guardarNuevoProducto()" class="btn-guardar">Guardar Producto</button></div>
       </section>
@@ -195,18 +386,17 @@
             <tr>
               <th>SKU</th>
               <th>Nombre</th>
-              <th>Categoria</th>
               <th>Precio</th>
               <th>Stock Actual</th>
-              <th>Stock Minimo</th>
+              <th>Stock Mínimo</th>
               <th>Estado Stock</th>
+              <th *ngIf="rolSeleccionado === 'ADMIN'">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let prod of productos">
               <td class="col-tracking">{{ prod.sku }}</td>
               <td><strong>{{ prod.nombre }}</strong></td>
-              <td>{{ prod.categoria }}</td>
               <td>${{ prod.precio | number }}</td>
               <td><strong>{{ prod.stock }}</strong> unidades</td>
               <td>{{ prod.stockMinimo }}</td>
@@ -215,6 +405,12 @@
                   {{ prod.stock <= prod.stockMinimo ? 'STOCK BAJO' : 'STOCK NORMAL' }}
                 </span>
               </td>
+              <td *ngIf="rolSeleccionado === 'ADMIN'" class="col-acciones">
+                <button (click)="ajustarStockRapido(prod, -1)" class="btn-accion" title="Restar 1">-1</button>
+                <button (click)="ajustarStockRapido(prod, 1)" class="btn-accion" title="Sumar 1">+1</button>
+                <button (click)="abrirModalEditarProducto(prod)" class="btn-accion">Editar</button>
+                <button (click)="eliminarProducto(prod.id, prod.sku)" class="btn-accion btn-accion-eliminar">Eliminar</button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -222,12 +418,13 @@
     </div>
   </main>
 
-  <!-- ================= MODAL DEDICADO: MODIFICAR / REPORTAR INCIDENCIA ================= -->
+  <!-- ================= MODALES ================= -->
+  <!-- Modal Incidencias -->
   <div *ngIf="pedidoParaIncidencia" class="modal-backdrop">
     <div class="modal-contenido">
       <h4>{{ pedidoParaIncidencia.incidencia ? 'Modificar Incidencia' : 'Reportar Incidencia' }} [{{ pedidoParaIncidencia.tracking }}]</h4>
       <p>Edita o ingresa el detalle del problema en ruta reportado por el operador:</p>
-      <textarea [(ngModel)]="detalleIncidenciaTemp" rows="4" placeholder="Ej: Domicilio cerrado, cliente ausente, direccion con error..."></textarea>
+      <textarea [(ngModel)]="detalleIncidenciaTemp" rows="4" placeholder="Ej: Domicilio cerrado, cliente ausente, dirección con error..."></textarea>
       <div class="acciones-modal">
         <button (click)="cerrarModalIncidencia()" class="btn-secundario">Cancelar</button>
         <button *ngIf="pedidoParaIncidencia.incidencia" (click)="solucionarIncidencia()" class="btn-resolver">
@@ -240,7 +437,7 @@
     </div>
   </div>
 
-  <!-- ================= MODAL DE EDICION GENERAL DE ORDEN ================= -->
+  <!-- Modal Edición Orden (ADMIN) -->
   <div *ngIf="pedidoEnEdicion" class="modal-backdrop">
     <div class="modal-contenido">
       <h4>Editar Orden: {{ pedidoEnEdicion.tracking }}</h4>
@@ -253,12 +450,39 @@
         </select>
       </div>
       <div class="campo">
-        <label>Detalle de Incidencia (dejar vacio si no hay problema):</label>
+        <label>Detalle de Incidencia (dejar vacío si no hay problema):</label>
         <input type="text" [(ngModel)]="pedidoEnEdicion.incidencia" placeholder="Sin incidencia reportada" />
       </div>
       <div class="acciones-modal">
         <button (click)="cerrarModalEditar()" class="btn-secundario">Cancelar</button>
         <button (click)="guardarEdicion()" class="btn-guardar">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Edición Producto (ADMIN) -->
+  <div *ngIf="productoEnEdicion" class="modal-backdrop">
+    <div class="modal-contenido">
+      <h4>Editar Producto: {{ productoEnEdicion.sku }}</h4>
+      <div class="campo">
+        <label>Nombre:</label>
+        <input type="text" [(ngModel)]="productoEnEdicion.nombre" />
+      </div>
+      <div class="campo">
+        <label>Precio Unitario ($):</label>
+        <input type="number" [(ngModel)]="productoEnEdicion.precio" />
+      </div>
+      <div class="campo">
+        <label>Stock Físico Actual:</label>
+        <input type="number" [(ngModel)]="productoEnEdicion.stock" />
+      </div>
+      <div class="campo">
+        <label>Umbral Mínimo de Alerta:</label>
+        <input type="number" [(ngModel)]="productoEnEdicion.stockMinimo" />
+      </div>
+      <div class="acciones-modal">
+        <button (click)="cerrarModalEditarProducto()" class="btn-secundario">Cancelar</button>
+        <button (click)="guardarEdicionProducto()" class="btn-guardar">Guardar Cambios</button>
       </div>
     </div>
   </div>

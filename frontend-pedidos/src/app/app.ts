@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef, NgZone } from '@angular/c
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { MsalService } from '@azure/msal-angular';
+import { AuthService } from '@auth0/auth0-angular';
 import { environment } from '../environments/environment';
 
 export interface Pedido {
@@ -37,15 +37,14 @@ export interface Producto {
   styleUrl: './app.css'
 })
 export class AppComponent implements OnInit {
-  private msalService = inject(MsalService);
+  public auth = inject(AuthService);
   private http = inject(HttpClient);
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
 
   moduloActivo: 'PEDIDOS' | 'PRODUCTOS' = 'PEDIDOS';
 
-  isLoggedIn = true;
-  userName = 'Usuario Evaluador (Azure)';
+  userName = 'Usuario';
   rolSeleccionado: 'OPERADOR' | 'ADMIN' = 'ADMIN';
   pedidos: Pedido[] = [];
   productos: Producto[] = [];
@@ -55,7 +54,16 @@ export class AppComponent implements OnInit {
   private apiPedidosUrl = environment.apiUrl;
   private apiProductosUrl = environment.apiUrl.replace('/pedidos', '/productos');
 
-  estadosDisponibles: string[] = ['En Preparacion', 'En Transito', 'En Reparto', 'Incidencia en Ruta', 'Entregado'];
+  // Estados completos del flujo logístico
+  estadosDisponibles: string[] = [
+    'En Preparacion',
+    'Listo para Despacho',
+    'En Transito',
+    'En Reparto',
+    'Entregado',
+    'Incidencia en Ruta'
+  ];
+
   couriersDisponibles: string[] = ['Blue Express', 'Chilexpress', 'Flota Propia'];
 
   mostrarFormularioCreacion = false;
@@ -63,6 +71,12 @@ export class AppComponent implements OnInit {
   pedidoEnEdicion: Pedido | null = null;
   pedidoParaIncidencia: Pedido | null = null;
   detalleIncidenciaTemp = '';
+
+  // Control de estado para edición de productos
+  productoEnEdicion: Producto | null = null;
+
+  // Filtro de clasificación por Estado (Exclusivo Administrador)
+  filtroEstadoSeleccionado: string = 'TODOS';
 
   nuevoPedido = {
     cliente: '',
@@ -77,7 +91,7 @@ export class AppComponent implements OnInit {
     sku: '',
     nombre: '',
     descripcion: '',
-    categoria: 'Abarrotes',
+    categoria: 'General',
     precio: 0,
     stock: 10,
     stockMinimo: 5
@@ -88,23 +102,49 @@ export class AppComponent implements OnInit {
     this.obtenerPedidos();
     this.obtenerProductos();
 
-    // Inicializacion de MSAL encapsulada para no perder la zona de Angular
-    this.msalService.instance.initialize().then(() => {
-      return this.msalService.instance.handleRedirectPromise();
-    }).then((resultado) => {
-      this.ngZone.run(() => {
-        if (resultado && resultado.account) {
-          this.msalService.instance.setActiveAccount(resultado.account);
-        }
-        const cuentaActiva = this.msalService.instance.getActiveAccount() || this.msalService.instance.getAllAccounts()[0];
-        if (cuentaActiva) {
-          this.userName = cuentaActiva.name || cuentaActiva.username;
-        }
-        this.cdr.detectChanges();
-      });
-    }).catch((err) => {
-      console.warn('MSAL en modo publico/evaluacion:', err);
+    // Sincronización del perfil de Auth0 y detección de ROL
+    this.auth.user$.subscribe((user) => {
+      if (user) {
+        this.ngZone.run(() => {
+          const identificador = (user.email || user.name || user.nickname || '').toLowerCase();
+          this.userName = user.name || user.email || 'Usuario Evaluador';
+
+          if (identificador.includes('bodega')) {
+            this.rolSeleccionado = 'OPERADOR';
+          } else {
+            this.rolSeleccionado = 'ADMIN';
+          }
+
+          this.cdr.detectChanges();
+        });
+      }
     });
+  }
+
+  // --- FILTRO POR ESTADO PARA EL ADMINISTRADOR ---
+  get pedidosFiltrados(): Pedido[] {
+    if (this.filtroEstadoSeleccionado === 'TODOS') {
+      return this.pedidos;
+    }
+    return this.pedidos.filter(p => p.estado === this.filtroEstadoSeleccionado);
+  }
+
+  seleccionarFiltroEstado(estado: string): void {
+    this.filtroEstadoSeleccionado = estado;
+  }
+
+  getPorcentaje(cantidad: number): number {
+    if (!this.pedidos.length) return 0;
+    return Math.round((cantidad / this.pedidos.length) * 100);
+  }
+
+  // --- ACCIONES DE AUTENTICACIÓN AUTH0 ---
+  login(): void {
+    this.auth.loginWithRedirect();
+  }
+
+  logout(): void {
+    this.auth.logout({ logoutParams: { returnTo: window.location.origin } });
   }
 
   cambiarModulo(modulo: 'PEDIDOS' | 'PRODUCTOS'): void {
@@ -114,7 +154,7 @@ export class AppComponent implements OnInit {
     });
   }
 
-  // --- MODAL DE EDICION GENERAL (RESPUESTA INSTANTANEA) ---
+  // --- MODAL DE EDICIÓN GENERAL DE PEDIDOS ---
   abrirModalEditar(pedido: Pedido): void {
     this.ngZone.run(() => {
       this.pedidoEnEdicion = { ...pedido };
@@ -135,8 +175,6 @@ export class AppComponent implements OnInit {
     const editado = { ...this.pedidoEnEdicion };
     if (editado.incidencia && editado.incidencia.trim() !== '') {
       editado.estado = 'Incidencia en Ruta';
-    } else if (editado.estado === 'Incidencia en Ruta') {
-      editado.estado = 'En Transito';
     }
 
     this.http.post<Pedido>(this.apiPedidosUrl, editado).subscribe({
@@ -158,7 +196,7 @@ export class AppComponent implements OnInit {
     });
   }
 
-  // --- MODAL DE INCIDENCIAS (RESPUESTA INSTANTANEA) ---
+  // --- MODAL DE INCIDENCIAS ---
   abrirModalIncidencia(pedido: Pedido): void {
     this.ngZone.run(() => {
       this.pedidoParaIncidencia = pedido;
@@ -205,8 +243,8 @@ export class AppComponent implements OnInit {
         item.incidencia = motivo;
         item.estado = nuevoEstado;
         this.notificacionReciente = motivo 
-          ? `Incidencia actualizada en guia [${tracking}]: ${motivo}` 
-          : `Incidencia resuelta para la guia [${tracking}]`;
+          ? `Incidencia registrada en guía [${tracking}]: ${motivo}` 
+          : `Incidencia resuelta para la guía [${tracking}]`;
         this.guardarCacheLocal();
       }
       this.pedidoParaIncidencia = null;
@@ -215,7 +253,7 @@ export class AppComponent implements OnInit {
     });
   }
 
-  // --- GESTION DE PRODUCTOS (MODULO 1) ---
+  // --- GESTIÓN DE PRODUCTOS ---
   obtenerProductos(): void {
     this.http.get<Producto[]>(this.apiProductosUrl).subscribe({
       next: (data) => {
@@ -228,7 +266,7 @@ export class AppComponent implements OnInit {
         this.ngZone.run(() => {
           if (this.productos.length === 0) {
             this.productos = [
-              { id: 1, sku: 'ASEO-001', nombre: 'Detergente Industrial 5L', descripcion: 'Bidon concentrado', categoria: 'Aseo', precio: 12990, stock: 45, stockMinimo: 10 },
+              { id: 1, sku: 'ASEO-001', nombre: 'Detergente Industrial 5L', descripcion: 'Bidón concentrado', categoria: 'Aseo', precio: 12990, stock: 45, stockMinimo: 10 },
               { id: 2, sku: 'ASEO-002', nombre: 'Cloro Gel Desinfectante 1L', descripcion: 'Envase individual', categoria: 'Aseo', precio: 2490, stock: 4, stockMinimo: 15 },
               { id: 3, sku: 'ABAR-001', nombre: 'Arroz Grado 1 (1kg)', descripcion: 'Bolsa individual', categoria: 'Abarrotes', precio: 1350, stock: 120, stockMinimo: 20 }
             ];
@@ -265,12 +303,84 @@ export class AppComponent implements OnInit {
   }
 
   resetFormularioProducto(): void {
-    this.nuevoProducto = { sku: '', nombre: '', descripcion: '', categoria: 'Abarrotes', precio: 0, stock: 10, stockMinimo: 5 };
+    this.nuevoProducto = { sku: '', nombre: '', descripcion: '', categoria: 'General', precio: 0, stock: 10, stockMinimo: 5 };
     this.mostrarFormularioProducto = false;
     this.cdr.detectChanges();
   }
 
-  // --- GESTION DE PEDIDOS (MODULO 2) ---
+  // --- ACCIONES CRUD PRODUCTOS (ADMIN) ---
+  abrirModalEditarProducto(producto: Producto): void {
+    this.ngZone.run(() => {
+      this.productoEnEdicion = { ...producto };
+      this.cdr.detectChanges();
+    });
+  }
+
+  cerrarModalEditarProducto(): void {
+    this.ngZone.run(() => {
+      this.productoEnEdicion = null;
+      this.cdr.detectChanges();
+    });
+  }
+
+  guardarEdicionProducto(): void {
+    if (!this.productoEnEdicion?.id) return;
+
+    const editado = { ...this.productoEnEdicion };
+    this.http.put<Producto>(`${this.apiProductosUrl}/${editado.id}`, editado).subscribe({
+      next: () => this.aplicarEdicionProductoLocal(editado),
+      error: () => this.aplicarEdicionProductoLocal(editado)
+    });
+  }
+
+  private aplicarEdicionProductoLocal(editado: Producto): void {
+    this.ngZone.run(() => {
+      const idx = this.productos.findIndex(p => p.id === editado.id);
+      if (idx !== -1) {
+        this.productos[idx] = { ...editado };
+        this.notificacionReciente = `Producto ${editado.sku} actualizado correctamente`;
+      }
+      this.productoEnEdicion = null;
+      this.cdr.detectChanges();
+    });
+  }
+
+  ajustarStockRapido(producto: Producto, delta: number): void {
+    if (this.rolSeleccionado !== 'ADMIN') return;
+    const nuevoStock = Math.max(0, producto.stock + delta);
+    producto.stock = nuevoStock;
+
+    this.http.patch(`${this.apiProductosUrl}/${producto.id}/stock`, { stock: nuevoStock }).subscribe({
+      next: () => {
+        this.notificacionReciente = `Stock de ${producto.nombre}: ${nuevoStock} unidades`;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.notificacionReciente = `Stock de ${producto.nombre}: ${nuevoStock} unidades`;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  eliminarProducto(id: number | undefined, sku: string): void {
+    if (!id || this.rolSeleccionado !== 'ADMIN') return;
+    if (confirm(`¿Seguro que deseas eliminar el producto ${sku} del catálogo?`)) {
+      this.http.delete(`${this.apiProductosUrl}/${id}`).subscribe({
+        next: () => this.removerProductoLocal(id, sku),
+        error: () => this.removerProductoLocal(id, sku)
+      });
+    }
+  }
+
+  private removerProductoLocal(id: number, sku: string): void {
+    this.ngZone.run(() => {
+      this.productos = this.productos.filter(p => p.id !== id);
+      this.notificacionReciente = `Producto eliminado: ${sku}`;
+      this.cdr.detectChanges();
+    });
+  }
+
+  // --- GESTIÓN DE PEDIDOS ---
   obtenerPedidos(): void {
     this.cargando = true;
     this.http.get<Pedido[]>(this.apiPedidosUrl).subscribe({
@@ -299,7 +409,7 @@ export class AppComponent implements OnInit {
       id: p.id || (index + 1),
       tracking: p.tracking || `TRK-CL-${1000 + (index + 1) * 219}`,
       cliente: p.cliente || 'Cliente sin registrar',
-      producto: p.producto || 'Insumo Logistico',
+      producto: p.producto || 'Insumo Logístico',
       cantidad: p.cantidad || 1,
       total: p.total || 0,
       courier: p.courier || 'Blue Express',
@@ -331,7 +441,7 @@ export class AppComponent implements OnInit {
       next: (creado) => {
         this.ngZone.run(() => {
           this.pedidos.unshift(this.normalizarPedido(creado));
-          this.notificacionReciente = `Guia creada: ${payload.tracking}`;
+          this.notificacionReciente = `Guía creada: ${payload.tracking}`;
           this.guardarCacheLocal();
           this.resetFormulario();
         });
@@ -339,20 +449,12 @@ export class AppComponent implements OnInit {
       error: () => {
         this.ngZone.run(() => {
           this.pedidos.unshift({ ...payload, id: Date.now() });
-          this.notificacionReciente = `Guia creada: ${payload.tracking}`;
+          this.notificacionReciente = `Guía creada: ${payload.tracking}`;
           this.guardarCacheLocal();
           this.resetFormulario();
         });
       }
     });
-  }
-
-  // --- SOPORTE Y CONTROL DE ACCESO (ARCO) ---
-  enmascararNombre(nombre: string): string {
-    if (!nombre) return '';
-    if (this.rolSeleccionado === 'ADMIN') return nombre;
-    const partes = nombre.split(' ');
-    return partes.length === 1 ? partes[0].charAt(0) + '****' : `${partes[0]} ${partes[1].charAt(0)}****`;
   }
 
   cambiarRol(nuevoRol: 'OPERADOR' | 'ADMIN'): void {
@@ -372,7 +474,7 @@ export class AppComponent implements OnInit {
 
   eliminarPedido(id: number | undefined, tracking: string): void {
     if (!id || this.rolSeleccionado !== 'ADMIN') return;
-    if (confirm(`Confirma ejercicio del Derecho de Supresion ARCO para la guia ${tracking}`)) {
+    if (confirm(`Confirma ejercicio del Derecho de Supresión ARCO para la guía ${tracking}`)) {
       this.http.delete(`${this.apiPedidosUrl}/${id}`).subscribe({
         next: () => this.removerLocal(id, tracking),
         error: () => this.removerLocal(id, tracking)
@@ -418,6 +520,7 @@ export class AppComponent implements OnInit {
     });
   }
 
+  // Métodos de conteo para alimentar métricas y gráficos
   getCount(estado: string): number { return this.pedidos.filter(p => p.estado === estado).length; }
   getCountRuta(): number { return this.pedidos.filter(p => p.estado === 'En Transito' || p.estado === 'En Reparto').length; }
   getCountIncidencias(): number { return this.pedidos.filter(p => p.estado === 'Incidencia en Ruta' || (p.incidencia && p.incidencia.trim() !== '')).length; }
