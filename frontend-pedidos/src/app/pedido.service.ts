@@ -30,7 +30,7 @@ export interface MetricasDashboard {
 export class PedidoService {
   private http = inject(HttpClient);
   // Usa localhost si pruebas en tu máquina, o tu URL de Azure App Service si ya corre en la nube
-  private apiUrl = 'http://localhost:8080/api';
+  private apiUrl = 'https://pedidos360-apim.azure-api.net/api';
 
   getMetricas(): Observable<MetricasDashboard> {
     return this.http.get<MetricasDashboard>(`${this.apiUrl}/reportes/metricas`);
