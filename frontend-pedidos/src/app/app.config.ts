@@ -20,7 +20,8 @@ export const appConfig: ApplicationConfig = {
       },
       httpInterceptor: {
         allowedList: [
-          'https://api-pedidos-360-cjc8bmcbgmdjhxb2.westus3-01.azurewebsites.net/*', // Agregado para que Auth0 inyecte el token al Gateway
+          'https://pedidos360-apim.azure-api.net/*',
+          'https://api-pedidos-360-cjc8bmcbgmdjhxb2.westus3-01.azurewebsites.net/*',
           'https://*.azurewebsites.net/*',
           'http://localhost:8080/*'
         ]
