@@ -16,11 +16,11 @@ export const appConfig: ApplicationConfig = {
       clientId: 'Q8W8Bv8LC9PzxkMki1pZzo9JgmUCiPzB',
       authorizationParams: {
         redirect_uri: window.location.origin,
-        audience: 'https://api-pedidos-360.azurewebsites.net'
+        //audience: 'https://api-pedidos-360.azurewebsites.net'
       },
       httpInterceptor: {
         allowedList: [
-          'https://pedidos360-apim.azure-api.net/*', // Agregado para que Auth0 inyecte el token al Gateway
+          'https://api-pedidos-360-cjc8bmcbgmdjhxb2.westus3-01.azurewebsites.net/*', // Agregado para que Auth0 inyecte el token al Gateway
           'https://*.azurewebsites.net/*',
           'http://localhost:8080/*'
         ]

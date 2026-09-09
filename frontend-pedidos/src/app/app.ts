@@ -102,6 +102,15 @@ export class AppComponent implements OnInit {
     this.obtenerPedidos();
     this.obtenerProductos();
 
+    // Diagnóstico en consola para capturar errores de Auth0
+    this.auth.error$.subscribe(err => {
+      console.error('ERROR DE AUTH0:', err);
+    });
+
+    this.auth.isAuthenticated$.subscribe(autenticado => {
+      console.log('¿Estado de autenticación?:', autenticado);
+    });
+
     // Sincronización del perfil de Auth0 y detección de ROL
     this.auth.user$.subscribe((user) => {
       if (user) {
