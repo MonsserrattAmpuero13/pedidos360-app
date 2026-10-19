@@ -1,13 +1,17 @@
 /* =======================================================
-   ESTILOS GLOBALES Y CONTENEDOR PRINCIPAL
+   ESTILOS GLOBALES - SIN MÁRGENES EXTERNOS (PANTALLA COMPLETA)
    ======================================================= */
 :host {
   display: block;
+  width: 100%;
   min-height: 100vh;
-  background-color: #f1f5f9;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  color: #1e293b;
-  padding: 24px 16px;
+  background-color: #F7F4F0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #2C221E;
+  margin: 0;
+  padding: 0; /* ELIMINA EL MARCO EXTERNO QUE DEJABA EL ESPACIO CREMA */
   box-sizing: border-box;
 }
 
@@ -16,12 +20,14 @@
 }
 
 .contenedor-principal {
-  max-width: 1320px;
-  margin: 0 auto;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 16px 24px; /* Espaciado interno seguro para el contenido */
+  box-sizing: border-box;
 }
-
 /* =======================================================
-   BARRA SUPERIOR (NAVBAR)
+   BARRA SUPERIOR (NAVBAR) - 100% ANCHO
    ======================================================= */
 .navbar {
   display: flex;
@@ -29,12 +35,15 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
-  background: #ffffff;
+  background: #1B2A4A;
+  color: #FFFFFF;
+  width: 100%;
   padding: 16px 24px;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+  border: 1px solid #1B2A4A;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   margin-bottom: 24px;
+  box-sizing: border-box;
 }
 
 .brand {
@@ -45,17 +54,19 @@
 
 .brand h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
-  color: #0f172a;
+  font-family: inherit;
+  color: #FFFFFF;
+  letter-spacing: 0.3px;
 }
 
 .badge-azure {
-  background: #0078d4;
+  background: #2D6A4F;
   color: #ffffff;
   font-size: 11px;
   padding: 4px 10px;
-  border-radius: 20px;
+  border-radius: 2px;
   font-weight: 600;
   letter-spacing: 0.3px;
 }
@@ -63,10 +74,10 @@
 /* Navegación por pestañas de módulos */
 .nav-modulos {
   display: flex;
-  background: #f8fafc;
+  background: rgba(255, 255, 255, 0.1);
   padding: 4px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   gap: 6px;
 }
 
@@ -74,20 +85,20 @@
   border: none;
   background: transparent;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 2px;
   cursor: pointer;
   font-weight: 600;
   font-size: 13px;
-  color: #64748b;
+  color: #E2E8F0;
   transition: all 0.2s ease;
 }
 
 .nav-modulos button:hover {
-  color: #0f172a;
+  color: #ffffff;
 }
 
 .nav-modulos button.activo {
-  background: #0f172a;
+  background: #2D6A4F;
   color: #ffffff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
@@ -101,25 +112,25 @@
 
 .usuario-nombre {
   font-weight: 500;
-  color: #475569;
+  color: #E2E8F0;
   font-size: 13px;
 }
 
 .selector-rol {
   display: flex;
   align-items: center;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .selector-rol label {
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: #CBD5E1;
   padding: 6px 8px;
-  background: #f1f5f9;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .selector-rol button {
@@ -129,12 +140,12 @@
   font-size: 12px;
   cursor: pointer;
   font-weight: 600;
-  color: #475569;
+  color: #CBD5E1;
   transition: all 0.15s ease;
 }
 
 .selector-rol button.activo {
-  background: #2563eb;
+  background: #2D6A4F;
   color: #ffffff;
 }
 
@@ -145,14 +156,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1e40af;
+  background: #EAE3DC;
+  border: 1px solid #D1C7BD;
+  color: #1B2A4A;
+  width: 100%;
   padding: 12px 18px;
-  border-radius: 10px;
+  border-radius: 4px;
   margin-bottom: 24px;
   font-size: 14px;
   font-weight: 500;
+  box-sizing: border-box;
 }
 
 .btn-cerrar {
@@ -160,49 +173,54 @@
   border: none;
   cursor: pointer;
   font-size: 16px;
-  color: #1e40af;
+  color: #1B2A4A;
   padding: 0 4px;
+  font-weight: bold;
 }
 
 /* =======================================================
-   PANEL DE MÉTRICAS (DASHBOARD)
+   PANEL DE MÉTRICAS (DASHBOARD) - 100% ANCHO
    ======================================================= */
 .grid-metricas {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 16px;
+  width: 100%;
   margin-bottom: 24px;
 }
 
 .card-metrica {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid #E3DBD5;
+  border-radius: 4px;
   padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .metrica-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6B635F;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .metrica-valor {
-  font-size: 30px;
+  font-size: 26px;
   font-weight: 800;
-  color: #0f172a;
+  color: #1B2A4A;
+  font-family: inherit;
   margin-top: 6px;
 }
 
-.card-metrica.pendientes .metrica-valor { color: #d97706; }
-.card-metrica.ruta .metrica-valor { color: #2563eb; }
-.card-metrica.incidencias .metrica-valor { color: #dc2626; }
-.card-metrica.alertas .metrica-valor { color: #db2777; }
+.card-metrica.pendientes .metrica-valor { color: #D97706; }
+.card-metrica.ruta .metrica-valor { color: #2563EB; }
+.card-metrica.incidencias .metrica-valor { color: #DC2626; }
+.card-metrica.alertas .metrica-valor { color: #9333EA; }
 
 /* =======================================================
    BARRA DE ACCIONES (TOOLBAR)
@@ -213,75 +231,84 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
+  width: 100%;
   margin-bottom: 16px;
+  background: #ffffff;
+  padding: 16px 20px;
+  border-radius: 4px;
+  border: 1px solid #E3DBD5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  box-sizing: border-box;
 }
 
 .info-pedidos h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  color: #0f172a;
+  font-family: inherit;
+  color: #1B2A4A;
 }
 
 .info-pedidos p {
   margin: 4px 0 0 0;
   font-size: 13px;
-  color: #64748b;
+  color: #6B635F;
 }
 
 .acciones-toolbar {
   display: flex;
   gap: 10px;
+  align-items: center;
 }
 
 /* Botones */
 .btn-primario {
-  background: #2563eb;
+  background: #2D6A4F;
   color: #ffffff;
   border: none;
-  padding: 9px 18px;
-  border-radius: 8px;
+  padding: 8px 16px;
+  border-radius: 4px;
   font-weight: 600;
   cursor: pointer;
   font-size: 13px;
-  transition: background 0.15s ease;
+  transition: opacity 0.15s ease;
 }
 
-.btn-primario:hover { background: #1d4ed8; }
+.btn-primario:hover { opacity: 0.9; }
 
 .btn-secundario {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #334155;
-  padding: 9px 16px;
-  border-radius: 8px;
+  background: #EAE3DC;
+  border: 1px solid #D1C7BD;
+  color: #1B2A4A;
+  padding: 8px 14px;
+  border-radius: 4px;
   cursor: pointer;
   font-weight: 600;
   font-size: 13px;
   transition: background 0.15s ease;
 }
 
-.btn-secundario:hover { background: #f8fafc; }
+.btn-secundario:hover { background: #DFD7CE; }
 
 .btn-guardar {
-  background: #16a34a;
+  background: #2D6A4F;
   color: #ffffff;
   border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 8px 16px;
+  border-radius: 4px;
   font-weight: 600;
   cursor: pointer;
   font-size: 13px;
 }
 
-.btn-guardar:hover { background: #15803d; }
+.btn-guardar:hover { opacity: 0.9; }
 
 .btn-resolver {
-  background: #0284c7;
+  background: #1B2A4A;
   color: #ffffff;
   border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
+  padding: 8px 16px;
+  border-radius: 4px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -291,50 +318,56 @@
    ======================================================= */
 .card-formulario {
   background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-  padding: 24px;
+  border: 1px solid #E3DBD5;
+  border-radius: 4px;
+  width: 100%;
+  padding: 20px;
   margin-bottom: 24px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  box-sizing: border-box;
 }
 
 .card-formulario h4 {
-  margin: 0 0 18px 0;
-  font-size: 16px;
+  margin: 0 0 16px 0;
+  font-size: 15px;
   font-weight: 700;
-  color: #0f172a;
+  font-family: inherit;
+  color: #1B2A4A;
 }
 
 .grid-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 16px;
-  margin-bottom: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+  width: 100%;
 }
 
 .campo label, .campo-modal label {
   display: block;
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 6px;
-  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #6B635F;
+  text-transform: uppercase;
 }
 
 .campo input, .campo select, .campo-modal input, .campo-modal select, textarea {
   width: 100%;
-  padding: 9px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1px solid #E3DBD5;
+  border-radius: 4px;
   font-size: 13px;
   background-color: #ffffff;
-  color: #1e293b;
+  color: #2C221E;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .campo input:focus, .campo select:focus, textarea:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  border-color: #1B2A4A;
+  box-shadow: 0 0 0 2px rgba(27, 42, 74, 0.15);
 }
 
 .acciones-form {
@@ -343,50 +376,53 @@
 }
 
 /* =======================================================
-   TABLAS Y LISTADOS
+   TABLAS Y LISTADOS - 100% ANCHO REAL (SIN ESPACIO VACÍO)
    ======================================================= */
 .card-tabla {
   background: #ffffff;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  border: 1px solid #E3DBD5;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  box-sizing: border-box;
   overflow-x: auto;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .tabla-logistica {
   width: 100%;
-  min-width: 960px;
+  table-layout: auto; /* Ocupa el 100% distribuyendo el espacio equitativamente */
   border-collapse: collapse;
   text-align: left;
   font-size: 13px;
 }
 
 .tabla-logistica th {
-  background: #f8fafc;
-  padding: 14px 18px;
-  color: #475569;
+  background: #1B2A4A;
+  padding: 12px 16px;
+  color: #ffffff;
   font-weight: 600;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #1B2A4A;
   white-space: nowrap;
 }
 
 .tabla-logistica td {
-  padding: 14px 18px;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 12px 16px;
+  border-bottom: 1px solid #E3DBD5;
   vertical-align: middle;
+  color: #2C221E;
 }
 
 .col-tracking {
   font-weight: 700;
-  color: #0f172a;
+  color: #1B2A4A;
 }
 
 .badge-arco {
-  background: #e0e7ff;
-  color: #3730a3;
+  background: #EAE3DC;
+  color: #1B2A4A;
   font-size: 10px;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: 2px;
   margin-left: 6px;
   font-weight: 700;
 }
@@ -395,20 +431,20 @@
 .badge-estado {
   display: inline-block;
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: 2px;
   font-weight: 600;
   font-size: 11px;
 }
 
-.badge-estado.en-preparacion { background: #fef3c7; color: #92400e; }
-.badge-estado.en-transito { background: #e0f2fe; color: #075985; }
-.badge-estado.en-reparto { background: #e0e7ff; color: #3730a3; }
-.badge-estado.entregado { background: #dcfce7; color: #166534; }
-.badge-estado.incidencia-en-ruta { background: #fee2e2; color: #991b1b; }
+.badge-estado.en-preparacion { background: #FEF3C7; color: #92400E; }
+.badge-estado.en-transito { background: #DBEAFE; color: #1E40AF; }
+.badge-estado.en-reparto { background: #EDE9FE; color: #5B21B6; }
+.badge-estado.entregado { background: #D1FAE5; color: #065F46; }
+.badge-estado.incidencia-en-ruta { background: #FEE2E2; color: #991B1B; }
 
 .texto-incidencia {
   display: block;
-  color: #dc2626;
+  color: #DC2626;
   font-weight: 600;
   margin-top: 4px;
   font-size: 12px;
@@ -424,24 +460,25 @@
 
 .select-estado {
   font-size: 12px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
+  padding: 5px 8px;
+  border-radius: 4px;
+  border: 1px solid #E3DBD5;
   background: #ffffff;
 }
 
 .btn-accion {
-  border: 1px solid #cbd5e1;
+  border: 1px solid #E3DBD5;
   background: #ffffff;
-  border-radius: 6px;
-  padding: 6px 8px;
+  border-radius: 4px;
+  padding: 5px 8px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1;
   transition: background 0.15s ease;
 }
 
-.btn-accion:hover { background: #f1f5f9; }
+.btn-accion:hover { background: #F7F4F0; }
 
 /* =======================================================
    VENTANAS MODALES
@@ -449,7 +486,7 @@
 .modal-backdrop {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(27, 42, 74, 0.5);
   backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
@@ -460,19 +497,21 @@
 .modal-contenido {
   background: #ffffff;
   width: 100%;
-  max-width: 480px;
+  max-width: 440px;
   padding: 24px;
-  border-radius: 14px;
+  border-radius: 4px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+  border: 1px solid #E3DBD5;
 }
 
 .modal-contenido h4 {
   margin: 0;
-  font-size: 17px;
-  color: #0f172a;
+  font-size: 16px;
+  font-family: inherit;
+  color: #1B2A4A;
 }
 
 .acciones-modal {
@@ -481,7 +520,8 @@
   gap: 10px;
   margin-top: 10px;
 }
-/* Botones de Incidencia */
+
+/* Botones de Incidencia específicos */
 .bloque-incidencia {
   margin-top: 6px;
 }
@@ -490,7 +530,7 @@
   display: inline-block;
   background: none;
   border: none;
-  color: #b91c1c;
+  color: #DC2626;
   font-size: 11px;
   font-weight: 700;
   text-decoration: underline;
@@ -500,24 +540,25 @@
 }
 
 .btn-link-incidencia:hover {
-  color: #7f1d1d;
+  color: #991B1B;
 }
 
 .btn-accion-incidencia {
-  color: #92400e;
-  border-color: #fcd34d;
-  background-color: #fffbeb;
+  color: #92400E;
+  border-color: #FCD34D;
+  background-color: #FEF3C7;
   font-weight: 600;
 }
 
 .btn-accion-incidencia:hover {
-  background-color: #fef3c7;
+  background-color: #FDE68A;
 }
 
 .btn-accion-eliminar {
-  color: #b91c1c;
+  color: #991B1B;
+  border-color: #FCA5A5;
 }
 
 .btn-accion-eliminar:hover {
-  background-color: #fee2e2;
+  background-color: #FEE2E2;
 }

@@ -1,489 +1,725 @@
-<!-- ================= VISTA PÚBLICA: LANDING PAGE ================= -->
-<div *ngIf="!(auth.isAuthenticated$ | async)" style="min-height: 100vh; display: flex; flex-direction: column; background: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<!-- ================= VISTA PÚBLICA: LANDING PAGE INMERSIVA (INTACTA) ================= -->
+<div *ngIf="!(auth.isAuthenticated$ | async)" style="min-height: 100vh; display: flex; flex-direction: column; background: #F7F4F0; color: #2C221E; font-family: 'Inter', sans-serif;">
   
-  <header style="padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155;">
-    <div style="font-size: 1.5rem; font-weight: 700; color: #38bdf8;">
-      Pedidos 360
+  <header style="position: absolute; top: 0; left: 0; width: 100%; padding: 1.5rem 3rem; display: flex; justify-content: space-between; align-items: center; z-index: 10; background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);">
+    <div style="font-size: 1.3rem; font-family: 'Playfair Display', serif; font-weight: 700; color: white; letter-spacing: 0.5px;">
+      PEDIDOS 360
     </div>
-    <button (click)="login()" style="background-color: #0284c7; color: white; border: none; border-radius: 6px; padding: 0.6rem 1.4rem; font-size: 0.95rem; font-weight: 600; cursor: pointer;">
-      Iniciar Sesión
-    </button>
-  </header>
-
-  <main style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 3rem 1.5rem;">
-    <span style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; padding: 0.4rem 1rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1.5rem; border: 1px solid rgba(56, 189, 248, 0.2);">
-      Logistica Distribuidora ANDES
-    </span>
-
-    <h1 style="font-size: 2.8rem; font-weight: 800; max-width: 750px; line-height: 1.2; margin: 0 0 1.2rem 0;">
-      Control total de envíos, trazabilidad e inventario en tiempo real
-    </h1>
-
-    <p style="font-size: 1.15rem; color: #94a3b8; max-width: 600px; margin: 0 0 2.5rem 0; line-height: 1.6;">
-      Gestión centralizada de pedidos con integración a couriers, seguimiento de incidencias en ruta y auditoría de datos bajo estándares de seguridad.
-    </p>
-
-    <div>
-      <button (click)="login()" style="background-color: #0284c7; color: white; border: none; border-radius: 8px; padding: 0.9rem 2rem; font-size: 1.05rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);">
-        Ingresar al Sistema
+    <div style="display: flex; gap: 2rem; align-items: center;">
+      <a (click)="cambiarSeccionPublica('inicio')" style="color: #E2E8F0; text-decoration: none; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: color 0.2s;">Inicio</a>
+      <a (click)="cambiarSeccionPublica('catalogo')" style="color: #E2E8F0; text-decoration: none; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: color 0.2s;">Productos</a>
+      <button (click)="login()" style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); color: white; border-radius: 20px; padding: 0.5rem 1.2rem; font-size: 0.85rem; font-weight: 500; cursor: pointer; backdrop-filter: blur(5px); transition: background 0.2s;">
+        Iniciar Sesión
       </button>
     </div>
+  </header>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; max-width: 900px; width: 100%; margin-top: 4rem; text-align: left;">
-      <div style="background: #1e293b; padding: 1.5rem; border-radius: 8px; border: 1px solid #334155;">
-        <h4 style="margin: 0 0 0.5rem 0; color: #38bdf8; font-size: 1.1rem;">Trazabilidad 360</h4>
-        <p style="margin: 0; color: #94a3b8; font-size: 0.9rem; line-height: 1.4;">Control de estados de entrega, guías y despacho con múltiples operadores logísticos.</p>
+  <main style="flex: 1; display: flex; flex-direction: column;">
+    
+    <!-- VISTA 1: INICIO (HERO, SOLUCIÓN, QUIÉNES SOMOS, CARACTERÍSTICAS) -->
+    <div *ngIf="seccionPublica === 'inicio'">
+      <div style="position: relative; height: 90vh; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 1.5rem; background: linear-gradient(rgba(27, 42, 74, 0.65), rgba(27, 42, 74, 0.75)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1920&q=80') center/cover; color: white;">
+        
+        <span style="background: rgba(45, 106, 79, 0.9); color: white; padding: 0.4rem 1.2rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; margin-bottom: 1.5rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+          LOGÍSTICA DISTRIBUIDORA ANDES
+        </span>
+        
+        <h1 style="font-family: 'Playfair Display', serif; font-size: 3.5rem; font-weight: 700; max-width: 800px; line-height: 1.15; margin: 0 0 1.2rem 0; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+          Logística Distribuida, Precisión en Tiempo Real
+        </h1>
+        
+        <p style="font-size: 1.1rem; color: #E2E8F0; max-width: 600px; margin: 0 0 2.5rem 0; line-height: 1.6; text-shadow: 0 1px 5px rgba(0,0,0,0.3);">
+          Control total de envíos, trazabilidad automatizada e inventario optimizado para operaciones corporativas de alta exigencia.
+        </p>
+
+        <div style="display: flex; gap: 1rem;">
+          <button (click)="cambiarSeccionPublica('catalogo')" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4); color: white; text-decoration: none; border-radius: 25px; padding: 0.8rem 2rem; font-size: 0.95rem; font-weight: 600; backdrop-filter: blur(5px); cursor: pointer;">
+            Ver Catálogo de Productos →
+          </button>
+        </div>
       </div>
-      <div style="background: #1e293b; padding: 1.5rem; border-radius: 8px; border: 1px solid #334155;">
-        <h4 style="margin: 0 0 0.5rem 0; color: #38bdf8; font-size: 1.1rem;">Gestión de Incidencias</h4>
-        <p style="margin: 0; color: #94a3b8; font-size: 0.9rem; line-height: 1.4;">Resolución inmediata de alertas en ruta y reasignación de órdenes en tránsito.</p>
+
+      <!-- ================= SECCIÓN: SOLUCIÓN ================= -->
+      <div id="solucion" style="max-width: 1200px; margin: 0 auto; width: 100%; padding: 6rem 2rem 3rem 2rem;">
+        <div style="text-align: center; max-width: 800px; margin: 0 auto 4rem auto;">
+          <span style="color: #2D6A4F; font-weight: 700; font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase;">Nuestra Propuesta</span>
+          <h2 style="font-family: 'Playfair Display', serif; font-size: 2.5rem; color: #1B2A4A; margin: 0.5rem 0 1.5rem 0;">Una solución integral para la cadena de suministro</h2>
+          <p style="color: #5C534E; font-size: 1.05rem; line-height: 1.7;">
+            Pedidos 360 centraliza la operación entre la bodega central y los operadores en ruta. Automatizamos el ciclo de vida de cada orden desde el momento en que se genera la guía hasta su entrega final, eliminando cuellos de botella operativos.
+          </p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+          <div style="background: white; padding: 2rem; border-radius: 16px; border: 1px solid #E3DBD5; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+            <h3 style="font-family: 'Playfair Display', serif; color: #1B2A4A; font-size: 1.2rem; margin-bottom: 0.5rem;">Optimización de Bodega</h3>
+            <p style="color: #6B635F; font-size: 0.9rem; line-height: 1.5; margin: 0;">Control estricto de stock con alertas automáticas de mínimos para evitar quiebres de inventario.</p>
+          </div>
+          <div style="background: white; padding: 2rem; border-radius: 16px; border: 1px solid #E3DBD5; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+            <h3 style="font-family: 'Playfair Display', serif; color: #1B2A4A; font-size: 1.2rem; margin-bottom: 0.5rem;">Despachos Ágiles</h3>
+            <p style="color: #6B635F; font-size: 0.9rem; line-height: 1.5; margin: 0;">Procesamiento de órdenes por etapas (Preparación, Empacado, En Ruta) sin fricciones.</p>
+          </div>
+          <div style="background: white; padding: 2rem; border-radius: 16px; border: 1px solid #E3DBD5; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+            <h3 style="font-family: 'Playfair Display', serif; color: #1B2A4A; font-size: 1.2rem; margin-bottom: 0.5rem;">Control de Incidencias</h3>
+            <p style="color: #6B635F; font-size: 0.9rem; line-height: 1.5; margin: 0;">Registro y seguimiento de problemas en ruta para una rápida resolución gerencial.</p>
+          </div>
+        </div>
       </div>
-      <div style="background: #1e293b; padding: 1.5rem; border-radius: 8px; border: 1px solid #334155;">
-        <h4 style="margin: 0 0 0.5rem 0; color: #38bdf8; font-size: 1.1rem;">Autenticación Segura</h4>
-        <p style="margin: 0; color: #94a3b8; font-size: 0.9rem; line-height: 1.4;">Acceso protegido mediante tokens JWT firmados y control de roles RBAC.</p>
+
+      <!-- ================= SECCIÓN: QUIÉNES SOMOS ================= -->
+      <div id="quienes-somos" style="background: #EAE3DC; padding: 5rem 2rem; margin: 3rem 0; border-top: 1px solid #D1C7BD; border-bottom: 1px solid #D1C7BD;">
+        <div style="max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 3rem; align-items: center;">
+          <div>
+            <span style="color: #2D6A4F; font-weight: 700; font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase;">Quiénes Somos</span>
+            <h2 style="font-family: 'Playfair Display', serif; font-size: 2.2rem; color: #1B2A4A; margin: 0.5rem 0 1.2rem 0;">Distribuidora Andes</h2>
+            <p style="color: #5C534E; font-size: 0.95rem; line-height: 1.7; margin-bottom: 1rem;">
+              Somos una empresa líder en distribución logística en la región, enfocada en abastecer de manera eficiente a minimarkets, comercios asociados y clientes finales con altos estándares de puntualidad.
+            </p>
+            <p style="color: #5C534E; font-size: 0.95rem; line-height: 1.7;">
+              Con el desarrollo de nuestra plataforma tecnológica propia, optimizamos cada ruta y garantizamos el control total del inventario corporativo en tiempo real.
+            </p>
+          </div>
+          <div style="border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.08); height: 320px;">
+            <img src="https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=800&q=80" alt="Distribuidora Andes" style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECCIÓN: CARACTERÍSTICAS ================= -->
+      <div id="caracteristicas" style="max-width: 1200px; margin: 0 auto; width: 100%; padding: 3rem 2rem 5rem 2rem;">
+        <div style="text-align: center; margin-bottom: 3.5rem;">
+          <h2 style="font-family: 'Playfair Display', serif; font-size: 2.2rem; color: #1B2A4A; margin-bottom: 0.5rem;">Arquitectura y Pilares del Sistema</h2>
+          <p style="color: #6B635F; font-size: 0.95rem;">Diseñado bajo estrictos estándares de alta disponibilidad y resiliencia operativa.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-bottom: 5rem;">
+          <div style="background: white; border-radius: 20px; overflow: hidden; border: 1px solid #E3DBD5; box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
+            <div style="height: 180px; overflow: hidden;"><img src="https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=600&q=80" alt="Trazabilidad" style="width: 100%; height: 100%; object-fit: cover;"></div>
+            <div style="padding: 1.8rem;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #2D6A4F; background: #EAE3DC; padding: 3px 8px; border-radius: 6px;">01</span>
+              <h3 style="font-family: 'Playfair Display', serif; font-size: 1.3rem; color: #1B2A4A; margin: 0.8rem 0 0.5rem 0;">Trazabilidad 360</h3>
+              <p style="font-size: 0.9rem; color: #6B635F; line-height: 1.5; margin: 0;">Control absoluto de estados de entrega, guías de despacho y couriers en tiempo real.</p>
+            </div>
+          </div>
+
+          <div style="background: white; border-radius: 20px; overflow: hidden; border: 1px solid #E3DBD5; box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
+            <div style="height: 180px; overflow: hidden;"><img src="https://images.unsplash.com/photo-1580674684081-7617fbf3d745?auto=format&fit=crop&w=600&q=80" alt="Incidencias" style="width: 100%; height: 100%; object-fit: cover;"></div>
+            <div style="padding: 1.8rem;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #2D6A4F; background: #EAE3DC; padding: 3px 8px; border-radius: 6px;">02</span>
+              <h3 style="font-family: 'Playfair Display', serif; font-size: 1.3rem; color: #1B2A4A; margin: 0.8rem 0 0.5rem 0;">Gestión de Incidencias</h3>
+              <p style="font-size: 0.9rem; color: #6B635F; line-height: 1.5; margin: 0;">Monitoreo preventivo y aislamiento automatizado de transacciones para garantizar la continuidad operativa sin interrupciones.</p>
+            </div>
+          </div>
+
+          <div style="background: white; border-radius: 20px; overflow: hidden; border: 1px solid #E3DBD5; box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
+            <div style="height: 180px; overflow: hidden;"><img src="https://images.unsplash.com/photo-1616401784845-180882ba9ba8?auto=format&fit=crop&w=600&q=80" alt="Seguridad" style="width: 100%; height: 100%; object-fit: cover;"></div>
+            <div style="padding: 1.8rem;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #2D6A4F; background: #EAE3DC; padding: 3px 8px; border-radius: 6px;">03</span>
+              <h3 style="font-family: 'Playfair Display', serif; font-size: 1.3rem; color: #1B2A4A; margin: 0.8rem 0 0.5rem 0;">Seguridad y Confiabilidad</h3>
+              <p style="font-size: 0.9rem; color: #6B635F; line-height: 1.5; margin: 0;">Acceso corporativo altamente protegido con cifrado de nivel empresarial y control estricto de privilegios por roles.</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="background: #1B2A4A; color: white; border-radius: 24px; padding: 4rem 2rem; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+          <h2 style="font-family: 'Playfair Display', serif; font-size: 2.2rem; margin-bottom: 1rem;">¿Listo para operar en la plataforma?</h2>
+          <p style="color: #B5ABA1; max-width: 500px; margin: 0 auto 2rem auto; font-size: 0.95rem;">Accede con tus credenciales corporativas para gestionar despachos y supervisar el inventario de la distribuidora.</p>
+          <button (click)="login()" style="background-color: #2D6A4F; color: white; border: none; border-radius: 25px; padding: 0.9rem 2.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 15px rgba(45, 106, 79, 0.4);">
+            Iniciar Sesión en el Sistema
+          </button>
+        </div>
       </div>
     </div>
+
+    <!-- VISTA 2: CATÁLOGO DE PRODUCTOS (CON IMÁGENES Y DISEÑO ORDENADO) -->
+    <div *ngIf="seccionPublica === 'catalogo'" style="max-width: 1200px; margin: 0 auto; width: 100%; padding: 6rem 2rem 4rem 2rem; box-sizing: border-box;">
+      <div style="text-align: center; max-width: 800px; margin: 0 auto 3rem auto;">
+        <span style="color: #2D6A4F; font-weight: 700; font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase;">Abastecimiento B2B</span>
+        <h2 style="font-family: 'Playfair Display', serif; font-size: 2.3rem; color: #1B2A4A; margin: 0.5rem 0 1rem 0;">Catálogo de Productos para Comercios</h2>
+        <p style="color: #5C534E; font-size: 1rem; line-height: 1.6;">
+          Selecciona insumos mayoristas y solicita una cotización indicando tu comuna de destino.
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2rem;">
+        <div *ngFor="let prod of productos" style="background: white; border-radius: 16px; border: 1px solid #E3DBD5; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+          <div>
+            <div style="height: 140px; background: #f1f5f9; border-radius: 8px; overflow: hidden; margin-bottom: 12px; position: relative;">
+            <div [style.background-color]="iconoDe(prod).fondo" style="width: 100%; height: 180px; display: flex; align-items: center; justify-content: center; font-size: 4.5rem; border-bottom: 1px solid #E3DBD5;">
+  {{ iconoDe(prod).emoji }}
+</div>
+            </div>
+            <span style="font-size: 0.75rem; font-weight: 700; color: #2D6A4F; background: #EAE3DC; padding: 3px 8px; border-radius: 6px;">SKU: {{ prod.sku }}</span>
+            <h3 style="font-family: 'Playfair Display', serif; color: #1B2A4A; font-size: 1.2rem; margin: 0.8rem 0 0.4rem 0;">{{ prod.nombre }}</h3>
+            <p style="color: #6B635F; font-size: 0.85rem; line-height: 1.5; margin: 0 0 1rem 0;">{{ prod.descripcion }}</p>
+          </div>
+          <div>
+            <div style="font-size: 1.1rem; font-weight: 800; color: #1B2A4A; margin-bottom: 1rem;">${{ prod.precio | number }} <span style="font-size: 0.75rem; color: #6B635F; font-weight: normal;">/ un. mayorista</span></div>
+            <button (click)="abrirModalCotizar(prod)" style="background: #1B2A4A; color: white; border: none; width: 100%; padding: 0.6rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+              Cotizar Producto
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DE COTIZACION -->
+    <div *ngIf="mostrarModalCotizar" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.6); display: flex; justify-content: center; align-items: center; z-index: 100000; box-sizing: border-box;">
+      <div style="background: white; padding: 24px; border-radius: 12px; width: 420px; border: 1px solid #cbd5e1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: left; box-sizing: border-box; font-family: 'Inter', sans-serif;">
+        <h3 style="margin: 0 0 4px 0; font-size: 1.2rem; font-family: 'Playfair Display', serif; color: #1B2A4A;">Solicitud de Cotizacion</h3>
+        <p style="font-size: 0.85rem; color: #6B635F; margin: 0 0 16px 0;">Producto: <strong>{{ productoSeleccionadoParaCotizar?.nombre }}</strong></p>
+        
+        <div style="margin-bottom: 10px;">
+          <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 3px;">Nombre del Negocio:</label>
+          <input type="text" [(ngModel)]="nuevaCotizacion.cliente" placeholder="Ej: Minimarket Don Juan" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" />
+        </div>
+
+        <div style="margin-bottom: 10px;">
+          <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 3px;">Correo Electronico:</label>
+          <input type="email" [(ngModel)]="nuevaCotizacion.email" placeholder="contacto@minimarket.cl" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div>
+            <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 3px;">Region:</label>
+            <select (change)="onRegionCotizacionChange($event)" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; background: white;">
+              <option value="">Seleccione...</option>
+              <option value="Metropolitana">Metropolitana</option>
+              <option value="Valparaiso">Valparaíso</option>
+              <option value="OHiggins">O'Higgins</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 3px;">Comuna:</label>
+            <select [(ngModel)]="nuevaCotizacion.comuna" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; background: white;">
+              <option value="">Seleccione...</option>
+              <option *ngFor="let com of nuevaCotizacion.comunasDisponiblesPublicas" [value]="com">{{ com }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 3px;">Cantidad Requerida:</label>
+          <input type="number" [(ngModel)]="nuevaCotizacion.cantidad" min="1" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" />
+        </div>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button (click)="cerrarModalCotizar()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Cancelar</button>
+          <button (click)="enviarSolicitudCotizacion()" style="background: #2D6A4F; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Enviar Cotizacion</button>
+        </div>
+      </div>
+    </div>
+
   </main>
 
-  <footer style="padding: 1.5rem; text-align: center; font-size: 0.85rem; color: #64748b; border-top: 1px solid #1e293b;">
-    Pedidos 360 - Sistema de Gestión Logística
+  <footer style="padding: 2rem; text-align: center; font-size: 0.85rem; color: #6B635F; border-top: 1px solid #E3DBD5; background: #EAE3DC;">
+    Pedidos 360 - Sistema de Gestión Logística Profesional
   </footer>
 </div>
 
-<!-- ================= VISTA PRIVADA: SISTEMA COMPLETO ================= -->
-<div *ngIf="auth.isAuthenticated$ | async" class="contenedor-principal">
-  <!-- Barra Superior -->
-  <header class="navbar">
-    <div class="brand">
-      <h2>Pedidos 360</h2>
+<!-- ================= VISTA PRIVADA: TORRE DE CONTROL ENTERPRISE ================= -->
+<div *ngIf="auth.isAuthenticated$ | async" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; background: #f8fafc; margin: 0; padding: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; box-sizing: border-box; z-index: 9999;">
+  
+  <!-- SIDEBAR IZQUIERDO FIJO -->
+  <aside style="width: 240px; height: 100vh; background: #0f172a; color: #94a3b8; display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid #1e293b; box-sizing: border-box;">
+    
+    <div style="padding: 16px 20px; border-bottom: 1px solid #1e293b; background: #0b0f19; box-sizing: border-box;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="background: #2563eb; color: white; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 700; border-radius: 4px; font-size: 13px;">360</div>
+        <div>
+          <div style="color: #ffffff; font-weight: 700; font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">Pedidos 360</div>
+          <div style="font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Distribuidora Andes</div>
+        </div>
+      </div>
     </div>
 
-    <nav class="nav-modulos">
-      <button [class.activo]="moduloActivo === 'PEDIDOS'" (click)="cambiarModulo('PEDIDOS')">
-        Despachos y Envíos
+    <!-- Navegación Lateral -->
+    <nav style="padding: 16px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1;">
+      <div style="font-size: 9px; font-weight: 700; color: #475569; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.5px;">Módulos del Sistema</div>
+      
+      <button (click)="cambiarModulo('PEDIDOS')" 
+        [style.background]="moduloActivo === 'PEDIDOS' ? '#1e293b' : 'transparent'"
+        [style.color]="moduloActivo === 'PEDIDOS' ? '#ffffff' : '#94a3b8'"
+        style="display: flex; align-items: center; width: 100%; padding: 8px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
+        {{ rolSeleccionado === 'ADMIN' ? 'Despachos y Envíos' : 'Órdenes de Bodega' }}
       </button>
-      <button [class.activo]="moduloActivo === 'PRODUCTOS'" (click)="cambiarModulo('PRODUCTOS')">
-        Inventario de Productos
+
+      <button (click)="cambiarModulo('PRODUCTOS')" 
+        [style.background]="moduloActivo === 'PRODUCTOS' ? '#1e293b' : 'transparent'"
+        [style.color]="moduloActivo === 'PRODUCTOS' ? '#ffffff' : '#94a3b8'"
+        style="display: flex; align-items: center; width: 100%; padding: 8px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
+        Inventario y Stock
+      </button>
+
+      <button *ngIf="rolSeleccionado === 'ADMIN'" (click)="cambiarModulo('COTIZACIONES')" 
+        [style.background]="moduloActivo === 'COTIZACIONES' ? '#1e293b' : 'transparent'"
+        [style.color]="moduloActivo === 'COTIZACIONES' ? '#ffffff' : '#94a3b8'"
+        style="display: flex; align-items: center; width: 100%; padding: 8px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
+        Bandeja de Cotizaciones
       </button>
     </nav>
 
-    <div class="usuario-seccion" style="display: flex; align-items: center; gap: 12px;">
-      <span style="font-size: 0.85rem; color: #cbd5e1; font-weight: 500;">
-        Usuario: {{ (auth.user$ | async)?.name || (auth.user$ | async)?.email || userName }}
-      </span>
-
-      <span style="background: #1e293b; border: 1px solid #475569; color: #38bdf8; font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; letter-spacing: 0.5px;">
-        ROL: {{ rolSeleccionado }}
-      </span>
-
-      <button (click)="logout()" style="background-color: #ef4444; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
-        Cerrar Sesión
-      </button>
+    <div style="padding: 16px; border-top: 1px solid #1e293b; background: #0b0f19; box-sizing: border-box;">
+      <div style="font-size: 10px; color: #64748b; margin-bottom: 2px;">Usuario:</div>
+      <div style="color: #ffffff; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px;">
+        {{ (auth.user$ | async)?.name || (auth.user$ | async)?.email || userName }}
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="background: #1e293b; color: #38bdf8; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 3px; border: 1px solid #334155;">
+          {{ rolSeleccionado }}
+        </span>
+        <button (click)="logout()" style="background: #dc2626; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
+          Cerrar Sesión
+        </button>
+      </div>
     </div>
-  </header>
+  </aside>
 
-  <!-- Banner de Notificación -->
-  <div *ngIf="notificacionReciente" class="alerta-banner">
-    <span>{{ notificacionReciente }}</span>
-    <button (click)="descartarNotificacion()" class="btn-cerrar">Cerrar</button>
-  </div>
+  <!-- ÁREA DE TRABAJO PRINCIPAL (DERECHA) -->
+  <main style="flex: 1; height: 100vh; display: flex; flex-direction: column; overflow-y: auto; background: #f8fafc; box-sizing: border-box;">
+    
+    <!-- Barra Superior -->
+    <header style="background: #ffffff; padding: 0 24px; height: 60px; border-bottom: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; box-sizing: border-box;">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <h1 style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
+          {{ rolSeleccionado === 'ADMIN' ? 'Torre de Control Logístico' : 'Mesa de Picking y Bodega' }}
+        </h1>
+        <span style="color: #64748b; font-size: 12px; border-left: 1px solid #cbd5e1; padding-left: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
+          Sistema de Distribución y Trazabilidad Andes
+        </span>
+      </div>
+    </header>
 
-  <main class="contenido">
-    <!-- Panel de Métricas: Administrador (Control Global) -->
-    <section *ngIf="rolSeleccionado === 'ADMIN'" class="grid-metricas">
-      <div class="card-metrica">
-        <span class="metrica-label">Total Envíos</span>
-        <span class="metrica-valor">{{ pedidos.length }}</span>
+    <!-- Contenido Principal -->
+    <div style="padding: 24px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; flex: 1;">
+      
+      <!-- Notificación del Sistema (Compacta y Limpia Arriba) -->
+      <div *ngIf="notificacionReciente" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; width: 100%; padding: 10px 16px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; box-sizing: border-box; box-shadow: 0 1px 3px rgba(0,0,0,0.05); flex-shrink: 0;">
+        <span>{{ notificacionReciente }}</span>
+        <button (click)="descartarNotificacion()" style="background: transparent; border: none; color: #64748b; cursor: pointer; font-weight: bold; font-size: 15px; padding: 2px 6px; line-height: 1;">X</button>
       </div>
-      <div class="card-metrica pendientes">
-        <span class="metrica-label">En Preparación</span>
-        <span class="metrica-valor">{{ getCount('En Preparacion') }}</span>
-      </div>
-      <div class="card-metrica ruta">
-        <span class="metrica-label">En Ruta</span>
-        <span class="metrica-valor">{{ getCountRuta() }}</span>
-      </div>
-      <div class="card-metrica incidencias">
-        <span class="metrica-label">Incidencias Activas</span>
-        <span class="metrica-valor">{{ getCountIncidencias() }}</span>
-      </div>
-      <div class="card-metrica alertas">
-        <span class="metrica-label">Alertas de Stock</span>
-        <span class="metrica-valor">{{ getAlertasStockCount() }}</span>
-      </div>
-    </section>
 
-    <!-- Panel de Métricas: Bodega (Solo Métricas Físicas de Almacén) -->
-    <section *ngIf="rolSeleccionado === 'OPERADOR'" class="grid-metricas">
-      <div class="card-metrica">
-        <span class="metrica-label">Pedidos Recibidos</span>
-        <span class="metrica-valor">{{ getCount('En Preparacion') + getCount('Listo para Despacho') }}</span>
-      </div>
-      <div class="card-metrica pendientes">
-        <span class="metrica-label">En Preparación</span>
-        <span class="metrica-valor">{{ getCount('En Preparacion') }}</span>
-      </div>
-      <div class="card-metrica" style="border-top: 4px solid #10b981;">
-        <span class="metrica-label">Pedidos Armados</span>
-        <span class="metrica-valor" style="color: #10b981;">{{ getCount('Listo para Despacho') }}</span>
-      </div>
-    </section>
+      <!-- SECCIÓN SUPERIOR: MÉTRICAS + GRÁFICO DE TORTA GIGANTE -->
+      <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; width: 100%;">
+        
+        <!-- Métricas Admin -->
+        <section *ngIf="rolSeleccionado === 'ADMIN'" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-content: start;">
+          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
+            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">Total Órdenes</span>
+            <span style="font-size: 26px; font-weight: 800; color: #0f172a;">{{ pedidos.length }}</span>
+          </div>
+          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
+            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">En Preparación</span>
+            <span style="font-size: 26px; font-weight: 800; color: #d97706;">{{ getCount('En Preparacion') }}</span>
+          </div>
+          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
+            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">En Ruta (GPS)</span>
+            <span style="font-size: 26px; font-weight: 800; color: #2563eb;">{{ getCountRuta() }}</span>
+          </div>
+          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
+            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">Incidencias</span>
+            <span style="font-size: 26px; font-weight: 800; color: #dc2626;">{{ getCountIncidencias() }}</span>
+          </div>
+        </section>
 
-    <!-- ================= VISTA 1: DESPACHOS ================= -->
-    <div *ngIf="moduloActivo === 'PEDIDOS'">
+        <!-- Métricas Operador -->
+        <section *ngIf="rolSeleccionado === 'OPERADOR'" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-content: start;">
+          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
+            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">Pendientes Picking</span>
+            <span style="font-size: 26px; font-weight: 800; color: #d97706;">{{ getCount('En Preparacion') }}</span>
+          </div>
+          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
+            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">Listos Despacho</span>
+            <span style="font-size: 26px; font-weight: 800; color: #16a34a;">{{ getCount('Listo para Despacho') }}</span>
+          </div>
+        </section>
 
-      <!-- GRÁFICO VISUAL DE DISTRIBUCIÓN POR ESTADOS (Solo Administrador) -->
-      <section *ngIf="rolSeleccionado === 'ADMIN'" style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <!-- Gráfico de Torta Dinámico con Datos Reales -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;">
+          <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 14px; width: 100%; text-align: left; letter-spacing: 0.5px;">Distribución de Órdenes</span>
+          <div style="display: flex; align-items: center; gap: 24px; justify-content: center; width: 100%;">
+            <svg width="130" height="130" viewBox="0 0 32 32" style="transform: rotate(-90deg);">
+              <circle cx="16" cy="16" r="13" fill="none" stroke="#e2e8f0" stroke-width="5"></circle>
+              <circle cx="16" cy="16" r="13" fill="none" stroke="#2563eb" stroke-width="5" stroke-dasharray="82" [style.stroke-dashoffset]="pedidos.length > 0 ? 82 - (getCountRuta() / pedidos.length) * 82 : 82"></circle>
+              <circle cx="16" cy="16" r="13" fill="none" stroke="#d97706" stroke-width="5" stroke-dasharray="82" [style.stroke-dashoffset]="pedidos.length > 0 ? 82 - (getCount('En Preparacion') / pedidos.length) * 82 : 82"></circle>
+            </svg>
+            <div style="font-size: 11px; color: #334155; display: flex; flex-direction: column; gap: 6px; font-weight: 600;">
+              <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #2563eb; border-radius: 50%;"></span> En Ruta: {{ getCountRuta() }}</div>
+              <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #d97706; border-radius: 50%;"></span> Preparación: {{ getCount('En Preparacion') }}</div>
+              <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #cbd5e1; border-radius: 50%;"></span> Total: {{ pedidos.length }}</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= MÓDULO 1: PEDIDOS / DESPACHOS ================= -->
+      <div *ngIf="moduloActivo === 'PEDIDOS'" style="width: 100%;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; width: 100%; padding: 14px 18px; border-radius: 6px 6px 0 0; border: 1px solid #cbd5e1; border-bottom: none; box-sizing: border-box;">
           <div>
-            <h4 style="margin: 0; color: #38bdf8; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
-              Gráfico de Distribución del Ciclo de Envíos
-            </h4>
-            <span style="font-size: 0.8rem; color: #94a3b8;">Volumen relativo por etapa operativa</span>
-          </div>
-          <span style="font-size: 0.85rem; color: #cbd5e1; background: #0f172a; padding: 4px 10px; border-radius: 4px; border: 1px solid #334155;">
-            Total: {{ pedidos.length }} órdenes
-          </span>
-        </div>
-
-        <!-- Gráfico de Columnas / Barras Dinámicas -->
-        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; height: 160px; align-items: end; padding: 1rem 0; border-bottom: 1px solid #334155;">
-          
-          <!-- Columna: En Preparación -->
-          <div style="display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;">
-            <span style="font-size: 0.8rem; font-weight: 700; color: #facc15; margin-bottom: 6px;">
-              {{ getCount('En Preparacion') }} ({{ getPorcentaje(getCount('En Preparacion')) }}%)
-            </span>
-            <div [style.height.%]="getPorcentaje(getCount('En Preparacion')) || 8" style="width: 70%; background: linear-gradient(180deg, #facc15, #ca8a04); border-radius: 4px 4px 0 0; min-height: 8px; transition: height 0.4s ease;"></div>
-            <span style="font-size: 0.75rem; color: #cbd5e1; margin-top: 8px; text-align: center;">Preparación</span>
+            <h3 style="margin: 0; font-size: 14px; font-weight: 700; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
+              {{ rolSeleccionado === 'ADMIN' ? 'Control de Órdenes y Envíos' : 'Mesa de Picking Operativo' }}
+            </h3>
+            <span style="font-size: 11px; color: #64748b;">Mostrando {{ pedidosFiltrados.length }} registros</span>
           </div>
 
-          <!-- Columna: Listo para Despacho -->
-          <div style="display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;">
-            <span style="font-size: 0.8rem; font-weight: 700; color: #34d399; margin-bottom: 6px;">
-              {{ getCount('Listo para Despacho') }} ({{ getPorcentaje(getCount('Listo para Despacho')) }}%)
-            </span>
-            <div [style.height.%]="getPorcentaje(getCount('Listo para Despacho')) || 8" style="width: 70%; background: linear-gradient(180deg, #34d399, #059669); border-radius: 4px 4px 0 0; min-height: 8px; transition: height 0.4s ease;"></div>
-            <span style="font-size: 0.75rem; color: #cbd5e1; margin-top: 8px; text-align: center;">Armado</span>
-          </div>
-
-          <!-- Columna: En Ruta -->
-          <div style="display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;">
-            <span style="font-size: 0.8rem; font-weight: 700; color: #60a5fa; margin-bottom: 6px;">
-              {{ getCountRuta() }} ({{ getPorcentaje(getCountRuta()) }}%)
-            </span>
-            <div [style.height.%]="getPorcentaje(getCountRuta()) || 8" style="width: 70%; background: linear-gradient(180deg, #60a5fa, #2563eb); border-radius: 4px 4px 0 0; min-height: 8px; transition: height 0.4s ease;"></div>
-            <span style="font-size: 0.75rem; color: #cbd5e1; margin-top: 8px; text-align: center;">En Ruta</span>
-          </div>
-
-          <!-- Columna: Entregado -->
-          <div style="display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;">
-            <span style="font-size: 0.8rem; font-weight: 700; color: #a78bfa; margin-bottom: 6px;">
-              {{ getCount('Entregado') }} ({{ getPorcentaje(getCount('Entregado')) }}%)
-            </span>
-            <div [style.height.%]="getPorcentaje(getCount('Entregado')) || 8" style="width: 70%; background: linear-gradient(180deg, #a78bfa, #7c3aed); border-radius: 4px 4px 0 0; min-height: 8px; transition: height 0.4s ease;"></div>
-            <span style="font-size: 0.75rem; color: #cbd5e1; margin-top: 8px; text-align: center;">Entregado</span>
-          </div>
-
-          <!-- Columna: Incidencias -->
-          <div style="display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;">
-            <span style="font-size: 0.8rem; font-weight: 700; color: #f87171; margin-bottom: 6px;">
-              {{ getCountIncidencias() }} ({{ getPorcentaje(getCountIncidencias()) }}%)
-            </span>
-            <div [style.height.%]="getPorcentaje(getCountIncidencias()) || 8" style="width: 70%; background: linear-gradient(180deg, #f87171, #dc2626); border-radius: 4px 4px 0 0; min-height: 8px; transition: height 0.4s ease;"></div>
-            <span style="font-size: 0.75rem; color: #cbd5e1; margin-top: 8px; text-align: center;">Incidencias</span>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- BARRA DE CONTROL CON CLASIFICACIÓN POR ESTADO -->
-      <div class="toolbar">
-        <div class="info-pedidos">
-          <h3>{{ rolSeleccionado === 'ADMIN' ? 'Gestión de Envíos y Trazabilidad' : 'Mesa de Armado y Picking' }}</h3>
-          <p>{{ pedidosFiltrados.length }} órdenes mostradas</p>
-        </div>
-
-        <div class="acciones-toolbar" style="display: flex; gap: 0.75rem; align-items: center;">
-          <!-- Filtro de Clasificación por Estado (Solo Administrador) -->
-          <div *ngIf="rolSeleccionado === 'ADMIN'" style="display: flex; align-items: center; gap: 0.5rem;">
-            <label style="font-size: 0.85rem; color: #94a3b8; font-weight: 600;">Estado:</label>
-            <select [(ngModel)]="filtroEstadoSeleccionado" style="background: #1e293b; color: white; border: 1px solid #475569; padding: 0.45rem 0.75rem; border-radius: 6px; font-size: 0.85rem; cursor: pointer;">
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <select *ngIf="rolSeleccionado === 'ADMIN'" [(ngModel)]="filtroEstadoSeleccionado" style="background: #ffffff; border: 1px solid #cbd5e1; padding: 5px 10px; border-radius: 4px; font-size: 12px;">
               <option value="TODOS">Todos los Estados</option>
               <option *ngFor="let est of estadosDisponibles" [value]="est">{{ est }}</option>
             </select>
+            <button (click)="obtenerPedidos()" style="background: #ffffff; border: 1px solid #cbd5e1; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Recargar</button>
+            <button *ngIf="rolSeleccionado === 'ADMIN'" (click)="toggleFormulario()" style="background: #2563eb; color: white; border: none; padding: 5px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">
+              {{ mostrarFormularioCreacion ? 'Cancelar' : '+ Nueva Guía' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Formulario Nueva Guía con Carrito de Múltiples Productos -->
+        <section *ngIf="mostrarFormularioCreacion && rolSeleccionado === 'ADMIN'" style="background: #ffffff; border: 1px solid #cbd5e1; border-top: none; width: 100%; padding: 18px; box-sizing: border-box;">
+          <h4 style="margin: 0 0 12px 0; font-size: 13px; font-weight: 700; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">Registrar Nueva Guía de Despacho</h4>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; width: 100%; margin-bottom: 14px;">
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Cliente:</label>
+              <input type="text" name="cliente" [(ngModel)]="nuevoPedido.cliente" placeholder="Nombre del cliente" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" />
+            </div>
+
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Región:</label>
+              <select name="region" [(ngModel)]="nuevoPedido.region" (change)="onRegionChange($event)" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box; background: #ffffff;">
+                <option value="">Seleccione Región...</option>
+                <option value="Metropolitana">Región Metropolitana</option>
+                <option value="Valparaiso">Región de Valparaíso</option>
+                <option value="OHiggins">Región de O'Higgins</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Comuna:</label>
+              <select name="comuna" [(ngModel)]="nuevoPedido.comuna" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box; background: #ffffff;">
+                <option value="">Seleccione Comuna...</option>
+                <option *ngFor="let com of comunasDisponibles" [value]="com">{{ com }}</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Courier:</label>
+              <select name="courier" [(ngModel)]="nuevoPedido.courier" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box; background: #ffffff;">
+                <option value="">Seleccione Courier...</option>
+                <option *ngFor="let c of couriersDisponibles" [value]="c">{{ c }}</option>
+              </select>
+            </div>
           </div>
 
-          <button (click)="obtenerPedidos()" class="btn-secundario">Recargar</button>
-          <button *ngIf="rolSeleccionado === 'ADMIN'" (click)="toggleFormulario()" class="btn-primario">
-            {{ mostrarFormularioCreacion ? 'Cancelar' : '+ Nueva Guía' }}
-          </button>
+          <!-- SECCIÓN DE CARRITO / MÚLTIPLES PRODUCTOS -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; margin-bottom: 14px;">
+            <label style="font-size: 11px; font-weight: 700; color: #0f172a; display: block; margin-bottom: 8px; text-transform: uppercase;">Detalle de Productos del Pedido:</label>
+            
+            <div style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px;">
+              <div style="flex: 2;">
+                <label style="font-size: 10px; color: #64748b; display: block; margin-bottom: 2px;">Producto del Inventario:</label>
+                <select name="prodTemp" [(ngModel)]="nuevoPedido.productoTemp" style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; background: white;">
+                  <option value="">Seleccionar SKU...</option>
+                  <option *ngFor="let prod of productos" [value]="prod.nombre">{{ prod.nombre }} (${{ prod.precio | number }})</option>
+                </select>
+              </div>
+
+              <div style="flex: 1;">
+                <label style="font-size: 10px; color: #64748b; display: block; margin-bottom: 2px;">Cantidad:</label>
+                <input type="number" name="cantTemp" [(ngModel)]="nuevoPedido.cantidadTemp" min="1" style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; background: white;" />
+              </div>
+
+              <div>
+                <button type="button" (click)="agregarItemAlPedido()" style="background: #2563eb; color: white; border: none; padding: 7px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">+ Agregar</button>
+              </div>
+            </div>
+
+            <!-- Tabla con los productos añadidos -->
+            <div *ngIf="nuevoPedido.items.length > 0" style="background: white; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; margin-top: 8px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
+                <thead>
+                  <tr style="background: #f1f5f9; border-bottom: 1px solid #cbd5e1; color: #475569;">
+                    <th style="padding: 6px 10px;">Producto</th>
+                    <th style="padding: 6px 10px;">Cant.</th>
+                    <th style="padding: 6px 10px;">P. Unit</th>
+                    <th style="padding: 6px 10px;">Subtotal</th>
+                    <th style="padding: 6px 10px; text-align: center;">Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of nuevoPedido.items; let i = index" style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 6px 10px; font-weight: 600;">{{ item.producto }}</td>
+                    <td style="padding: 6px 10px;">{{ item.cantidad }}</td>
+                    <td style="padding: 6px 10px;">${{ item.precioUnitario | number }}</td>
+                    <td style="padding: 6px 10px; font-weight: 700;">${{ item.subtotal | number }}</td>
+                    <td style="padding: 6px 10px; text-align: center;">
+                      <button type="button" (click)="quitarItemPedido(i)" style="background: #dc2626; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px;">Eliminar</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
+              <span style="font-size: 12px; font-weight: 700; color: #0f172a;">Total Automático General:</span>
+              <span style="font-size: 15px; font-weight: 800; color: #16a34a;">${{ nuevoPedido.total | number }}</span>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end;">
+            <button (click)="guardarNuevoPedido()" style="background: #16a34a; color: white; border: none; padding: 6px 16px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Generar Guía</button>
+          </div>
+        </section>
+
+        <!-- Tabla de Envíos -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; width: 100%; border-radius: 0 0 6px 6px; overflow-x: auto; box-sizing: border-box;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 1px solid #cbd5e1; color: #475569; font-weight: 700;">
+                <th style="padding: 10px 14px;">Tracking</th>
+                <th *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">Cliente</th>
+                <th *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">Destino</th>
+                <th style="padding: 10px 14px;">Producto Solicitado</th>
+                <th style="padding: 10px 14px;">Cant.</th>
+                <th *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">Courier</th>
+                <th style="padding: 10px 14px;">Estado</th>
+                <th style="padding: 10px 14px;">Acciones Operativas</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of pedidosFiltrados" style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 10px 14px; font-weight: 700; color: #0f172a;">{{ p.tracking }}</td>
+                <td *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">{{ p.cliente }}</td>
+                <td *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">{{ p.destino }}</td>
+                <td style="padding: 10px 14px;">{{ p.producto }}</td>
+                <td style="padding: 10px 14px;"><strong>{{ p.cantidad }}</strong> un.</td>
+                <td *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">{{ p.courier }}</td>
+                <td style="padding: 10px 14px;">
+                  <span style="background: #f8fafc; color: #334155; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid #cbd5e1;">
+                    {{ p.estado }}
+                  </span>
+                  <div *ngIf="p.incidencia" style="margin-top: 3px; font-size: 10px; color: #dc2626; font-weight: 600;">
+                    [Incidencia: {{ p.incidencia }}]
+                  </div>
+                </td>
+                <td style="padding: 10px 14px;">
+                  <ng-container *ngIf="rolSeleccionado === 'ADMIN'">
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                      <select [ngModel]="p.estado" (ngModelChange)="cambiarEstado(p, $event)" style="padding: 3px 6px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 11px;">
+                        <option *ngFor="let est of estadosDisponibles" [value]="est">{{ est }}</option>
+                      </select>
+                      <button (click)="abrirModalIncidencia(p)" style="background: #d97706; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Incidencia</button>
+                      <button (click)="abrirModalEditar(p)" style="background: #2563eb; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Editar</button>
+                      <button (click)="eliminarPedido(p.id, p.tracking)" style="background: #dc2626; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Eliminar</button>
+                    </div>
+                  </ng-container>
+                  <ng-container *ngIf="rolSeleccionado === 'OPERADOR'">
+                    <div *ngIf="p.estado === 'En Preparacion'" style="display: flex; gap: 6px;">
+                      <button (click)="cambiarEstado(p, 'Listo para Despacho')" style="background: #16a34a; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Marcar Listo</button>
+                      <button (click)="abrirModalIncidencia(p)" style="background: #d97706; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Reportar Daño</button>
+                    </div>
+                    <div *ngIf="p.estado === 'Listo para Despacho'">
+                      <span style="color: #16a34a; font-weight: 700; font-size: 11px;">[Listo] Esperando Courier</span>
+                    </div>
+                    <div *ngIf="p.estado !== 'En Preparacion' && p.estado !== 'Listo para Despacho'">
+                      <span style="color: #64748b; font-size: 11px; font-style: italic;">Fuera de Bodega (En Ruta)</span>
+                    </div>
+                  </ng-container>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <!-- Formulario Nueva Guía (Solo ADMIN) -->
-      <section *ngIf="mostrarFormularioCreacion && rolSeleccionado === 'ADMIN'" class="card-formulario">
-        <h4>Registrar Nuevo Envío</h4>
-        <div class="grid-form">
-          <div class="campo">
-            <label>Cliente:</label>
-            <input type="text" [(ngModel)]="nuevoPedido.cliente" placeholder="Nombre del cliente" />
+      <!-- ================= MÓDULO 2: INVENTARIO ================= -->
+      <div *ngIf="moduloActivo === 'PRODUCTOS'" style="width: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; width: 100%; padding: 14px 18px; border-radius: 6px 6px 0 0; border: 1px solid #cbd5e1; border-bottom: none; box-sizing: border-box;">
+          <div>
+            <h3 style="margin: 0; font-size: 14px; font-weight: 700; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">Catálogo General de Inventario</h3>
+            <p style="margin: 0; font-size: 11px; color: #64748b;">{{ productos.length }} SKUs registrados</p>
           </div>
-          <div class="campo">
-            <label>Comuna / Destino:</label>
-            <input type="text" [(ngModel)]="nuevoPedido.destino" placeholder="Comuna de destino" />
-          </div>
-          <div class="campo">
-            <label>Producto:</label>
-            <select [(ngModel)]="nuevoPedido.producto">
-              <option *ngFor="let prod of productos" [value]="prod.nombre">{{ prod.nombre }}</option>
-            </select>
-          </div>
-          <div class="campo">
-            <label>Cantidad:</label>
-            <input type="number" [(ngModel)]="nuevoPedido.cantidad" min="1" />
-          </div>
-          <div class="campo">
-            <label>Total ($ CLP):</label>
-            <input type="number" [(ngModel)]="nuevoPedido.total" />
-          </div>
-          <div class="campo">
-            <label>Courier:</label>
-            <select [(ngModel)]="nuevoPedido.courier">
-              <option *ngFor="let c of couriersDisponibles" [value]="c">{{ c }}</option>
-            </select>
-          </div>
-        </div>
-        <div class="acciones-form">
-          <button (click)="guardarNuevoPedido()" class="btn-guardar">Generar Guía</button>
-        </div>
-      </section>
-
-      <!-- Tabla de Envíos: Protección PII y Control Operativo Estricto -->
-      <section class="card-tabla">
-        <table class="tabla-logistica">
-          <thead>
-            <tr>
-              <th>Tracking</th>
-              <th *ngIf="rolSeleccionado === 'ADMIN'">Cliente</th>
-              <th *ngIf="rolSeleccionado === 'ADMIN'">Destino</th>
-              <th>Producto Solicitado</th>
-              <th>Cantidad</th>
-              <th *ngIf="rolSeleccionado === 'ADMIN'">Courier</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let p of pedidosFiltrados">
-              <td class="col-tracking">{{ p.tracking }}</td>
-
-              <!-- PII blindada: Bodega no ve nombres ni direcciones -->
-              <td *ngIf="rolSeleccionado === 'ADMIN'">{{ p.cliente }}</td>
-              <td *ngIf="rolSeleccionado === 'ADMIN'">{{ p.destino }}</td>
-
-              <td>{{ p.producto }}</td>
-              <td><strong>{{ p.cantidad }}</strong> un.</td>
-
-              <td *ngIf="rolSeleccionado === 'ADMIN'">{{ p.courier }}</td>
-
-              <td>
-                <span class="badge-estado" [ngClass]="p.estado.toLowerCase().replace(' ', '-')">
-                  {{ p.estado }}
-                </span>
-                <div *ngIf="p.incidencia" class="bloque-incidencia">
-                  <span class="texto-incidencia">Incidencia: {{ p.incidencia }}</span>
-                  <button (click)="abrirModalIncidencia(p)" class="btn-link-incidencia">
-                    Modificar Incidencia
-                  </button>
-                </div>
-              </td>
-
-              <td class="col-acciones">
-                <!-- Flujo Comercial y CRUD para Administrador -->
-                <ng-container *ngIf="rolSeleccionado === 'ADMIN'">
-                  <select [ngModel]="p.estado" (ngModelChange)="cambiarEstado(p, $event)" class="select-estado">
-                    <option *ngFor="let est of estadosDisponibles" [value]="est">{{ est }}</option>
-                  </select>
-                  <button (click)="abrirModalIncidencia(p)" class="btn-accion btn-accion-incidencia">
-                    {{ p.incidencia ? 'Modificar Incidencia' : 'Reportar Incidencia' }}
-                  </button>
-                  <button (click)="abrirModalEditar(p)" class="btn-accion">Editar</button>
-                  <button (click)="eliminarPedido(p.id, p.tracking)" class="btn-accion btn-accion-eliminar">Eliminar</button>
-                </ng-container>
-
-                <!-- Flujo Operativo Estricto para Bodega -->
-                <ng-container *ngIf="rolSeleccionado === 'OPERADOR'">
-                  <!-- Caso 1: En preparación (Dentro de bodega) -->
-                  <div *ngIf="p.estado === 'En Preparacion'" style="display: flex; gap: 6px;">
-                    <button (click)="cambiarEstado(p, 'Listo para Despacho')" 
-                            style="background-color: #10b981; color: white; border: none; font-weight: 600; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
-                      Marcar Listo
-                    </button>
-                    <button (click)="abrirModalIncidencia(p)" 
-                            style="background-color: #f59e0b; color: white; border: none; font-weight: 600; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
-                      Reportar Daño
-                    </button>
-                  </div>
-
-                  <!-- Caso 2: Empacado esperando retiro -->
-                  <div *ngIf="p.estado === 'Listo para Despacho'" style="display: flex; align-items: center; gap: 8px;">
-                    <span style="color: #10b981; font-weight: 700; font-size: 0.85rem;">
-                      [Listo] Empacado (Esperando Courier)
-                    </span>
-                    <button (click)="abrirModalIncidencia(p)" 
-                            style="background-color: #f59e0b; color: white; border: none; font-weight: 600; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">
-                      Incidencia
-                    </button>
-                  </div>
-
-                  <!-- Caso 3: Fuera de bodega (Bloqueado para operario) -->
-                  <div *ngIf="p.estado !== 'En Preparacion' && p.estado !== 'Listo para Despacho'">
-                    <span style="color: #64748b; font-size: 0.85rem; font-style: italic; font-weight: 500;">
-                      Fuera de bodega (En Courier)
-                    </span>
-                  </div>
-                </ng-container>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-    </div>
-
-    <!-- ================= VISTA 2: INVENTARIO ================= -->
-    <div *ngIf="moduloActivo === 'PRODUCTOS'">
-      <div class="toolbar">
-        <div class="info-pedidos">
-          <h3>Catálogo e Inventario de Productos</h3>
-          <p>{{ productos.length }} productos registrados en base de datos</p>
-        </div>
-        <div class="acciones-toolbar">
-          <button (click)="obtenerProductos()" class="btn-secundario">Recargar</button>
-          <button *ngIf="rolSeleccionado === 'ADMIN'" (click)="mostrarFormularioProducto = !mostrarFormularioProducto" class="btn-primario">
+          <button *ngIf="rolSeleccionado === 'ADMIN'" (click)="mostrarFormularioProducto = !mostrarFormularioProducto" style="background: #2563eb; color: white; border: none; padding: 5px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">
             {{ mostrarFormularioProducto ? 'Cancelar' : '+ Nuevo Producto' }}
           </button>
         </div>
+
+        <!-- Formulario Producto -->
+        <section *ngIf="mostrarFormularioProducto && rolSeleccionado === 'ADMIN'" style="background: #ffffff; border: 1px solid #cbd5e1; border-top: none; width: 100%; padding: 18px; box-sizing: border-box;">
+          <h4 style="margin: 0 0 12px 0; font-size: 13px; font-weight: 700; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">Registrar Nuevo SKU en Inventario</h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; width: 100%; margin-bottom: 12px;">
+            <div><label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">SKU:</label><input type="text" name="skuProd" [(ngModel)]="nuevoProducto.sku" placeholder="Ej: ELEC-001" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" /></div>
+            <div><label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Nombre:</label><input type="text" name="nomProd" [(ngModel)]="nuevoProducto.nombre" placeholder="Nombre" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" /></div>
+            <div><label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Precio ($):</label><input type="number" name="precioProd" [(ngModel)]="nuevoProducto.precio" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" /></div>
+            <div><label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Stock Actual:</label><input type="number" name="stockProd" [(ngModel)]="nuevoProducto.stock" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" /></div>
+            <div><label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Stock Mínimo:</label><input type="number" name="minProd" [(ngModel)]="nuevoProducto.stockMinimo" style="width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" /></div>
+          </div>
+          <div style="display: flex; justify-content: flex-end;"><button (click)="guardarNuevoProducto()" style="background: #16a34a; color: white; border: none; padding: 6px 16px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Guardar SKU</button></div>
+        </section>
+
+        <!-- Tabla Productos -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; width: 100%; border-radius: 0 0 6px 6px; overflow-x: auto; box-sizing: border-box;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 1px solid #cbd5e1; color: #475569; font-weight: 700;">
+                <th style="padding: 10px 14px;">SKU</th>
+                <th style="padding: 10px 14px;">Descripción</th>
+                <th style="padding: 10px 14px;">Precio Unit.</th>
+                <th style="padding: 10px 14px;">Stock Actual</th>
+                <th style="padding: 10px 14px;">Umbral Mínimo</th>
+                <th style="padding: 10px 14px;">Estado</th>
+                <th *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let prod of productos" style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 10px 14px; font-weight: 700; color: #0f172a;">{{ prod.sku }}</td>
+                <td style="padding: 10px 14px;">{{ prod.nombre }}</td>
+                <td style="padding: 10px 14px;">${{ prod.precio | number }}</td>
+                <td style="padding: 10px 14px;"><strong>{{ prod.stock }}</strong> un.</td>
+                <td style="padding: 10px 14px;">{{ prod.stockMinimo }}</td>
+                <td style="padding: 10px 14px;">
+                  <span [style.background]="prod.stock <= prod.stockMinimo ? '#fee2e2' : '#dcfce7'" [style.color]="prod.stock <= prod.stockMinimo ? '#991b1b' : '#166534'" style="padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">
+                    {{ prod.stock <= prod.stockMinimo ? 'BAJO STOCK' : 'NORMAL' }}
+                  </span>
+                </td>
+                <td *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">
+                  <div style="display: flex; gap: 4px;">
+                    <button (click)="ajustarStockRapido(prod, -1)" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 11px;">-1</button>
+                    <button (click)="ajustarStockRapido(prod, 1)" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 11px;">+1</button>
+                    <button (click)="abrirModalEditarProducto(prod)" style="background: #2563eb; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px;">Editar</button>
+                    <button (click)="eliminarProducto(prod.id, prod.sku)" style="background: #dc2626; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px;">Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <!-- Formulario Nuevo Producto (Solo ADMIN) -->
-      <section *ngIf="mostrarFormularioProducto && rolSeleccionado === 'ADMIN'" class="card-formulario">
-        <h4>Registrar Producto en Inventario</h4>
-        <div class="grid-form">
-          <div class="campo"><label>SKU:</label><input type="text" [(ngModel)]="nuevoProducto.sku" placeholder="Ej: ELEC-005" /></div>
-          <div class="campo"><label>Nombre:</label><input type="text" [(ngModel)]="nuevoProducto.nombre" placeholder="Nombre del producto" /></div>
-          <div class="campo"><label>Precio Unitario ($):</label><input type="number" [(ngModel)]="nuevoProducto.precio" /></div>
-          <div class="campo"><label>Stock Actual:</label><input type="number" [(ngModel)]="nuevoProducto.stock" /></div>
-          <div class="campo"><label>Stock Mínimo (Umbral Alerta):</label><input type="number" [(ngModel)]="nuevoProducto.stockMinimo" /></div>
+      <!-- ================= MÓDULO 3: BANDEJA DE COTIZACIONES ================= -->
+      <div *ngIf="moduloActivo === 'COTIZACIONES' && rolSeleccionado === 'ADMIN'" style="width: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; width: 100%; padding: 14px 18px; border-radius: 6px 6px 0 0; border: 1px solid #cbd5e1; border-bottom: none; box-sizing: border-box;">
+          <div>
+            <h3 style="margin: 0; font-size: 14px; font-weight: 700; color: #0f172a;">Bandeja de Cotizaciones y Negociacion</h3>
+            <p style="margin: 0; font-size: 11px; color: #64748b;">Solicitudes enviadas desde el portal publico</p>
+          </div>
         </div>
-        <div class="acciones-form"><button (click)="guardarNuevoProducto()" class="btn-guardar">Guardar Producto</button></div>
-      </section>
 
-      <!-- Tabla de Productos -->
-      <section class="card-tabla">
-        <table class="tabla-logistica">
-          <thead>
-            <tr>
-              <th>SKU</th>
-              <th>Nombre</th>
-              <th>Precio</th>
-              <th>Stock Actual</th>
-              <th>Stock Mínimo</th>
-              <th>Estado Stock</th>
-              <th *ngIf="rolSeleccionado === 'ADMIN'">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let prod of productos">
-              <td class="col-tracking">{{ prod.sku }}</td>
-              <td><strong>{{ prod.nombre }}</strong></td>
-              <td>${{ prod.precio | number }}</td>
-              <td><strong>{{ prod.stock }}</strong> unidades</td>
-              <td>{{ prod.stockMinimo }}</td>
-              <td>
-                <span class="badge-estado" [style.background]="prod.stock <= prod.stockMinimo ? '#fee2e2' : '#dcfce7'" [style.color]="prod.stock <= prod.stockMinimo ? '#991b1b' : '#166534'">
-                  {{ prod.stock <= prod.stockMinimo ? 'STOCK BAJO' : 'STOCK NORMAL' }}
-                </span>
-              </td>
-              <td *ngIf="rolSeleccionado === 'ADMIN'" class="col-acciones">
-                <button (click)="ajustarStockRapido(prod, -1)" class="btn-accion" title="Restar 1">-1</button>
-                <button (click)="ajustarStockRapido(prod, 1)" class="btn-accion" title="Sumar 1">+1</button>
-                <button (click)="abrirModalEditarProducto(prod)" class="btn-accion">Editar</button>
-                <button (click)="eliminarProducto(prod.id, prod.sku)" class="btn-accion btn-accion-eliminar">Eliminar</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; width: 100%; border-radius: 0 0 6px 6px; overflow-x: auto; box-sizing: border-box;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 1px solid #cbd5e1; color: #475569; font-weight: 700;">
+                <th style="padding: 10px 14px;">Fecha</th>
+                <th style="padding: 10px 14px;">Cliente</th>
+                <th style="padding: 10px 14px;">Producto</th>
+                <th style="padding: 10px 14px;">Cant.</th>
+                <th style="padding: 10px 14px;">Destino</th>
+                <th style="padding: 10px 14px;">Total Est.</th>
+                <th style="padding: 10px 14px;">Estado</th>
+                <th style="padding: 10px 14px; text-align: center;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let cot of cotizaciones" style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 10px 14px; color: #64748b;">{{ cot.fecha }}</td>
+                <td style="padding: 10px 14px; font-weight: 700; color: #0f172a;">{{ cot.cliente }}</td>
+                <td style="padding: 10px 14px;">{{ cot.producto }}</td>
+                <td style="padding: 10px 14px;"><strong>{{ cot.cantidad }}</strong> un.</td>
+                <td style="padding: 10px 14px;">{{ cot.comuna }}, {{ cot.region }}</td>
+                <td style="padding: 10px 14px; font-weight: 700; color: #16a34a;">${{ cot.totalEst | number }}</td>
+                <td style="padding: 10px 14px;">
+                  <span style="padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; background: #e2e8f0; color: #334155;">
+                    {{ cot.estado }}
+                  </span>
+                </td>
+                <td style="padding: 10px 14px; text-align: center;">
+                  <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+                    <select [ngModel]="cot.estado" (ngModelChange)="cambiarEstadoCotizacion(cot, $event)" style="padding: 3px 6px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 11px; background: white;">
+                      <option value="PENDIENTE">Pendiente</option>
+                      <option value="CONTACTADO">Contactado</option>
+                      <option value="ACEPTADA">Aceptada por Cliente</option>
+                      <option value="RECHAZADA">Rechazada</option>
+                    </select>
+                    <button *ngIf="cot.estado === 'ACEPTADA'" (click)="convertirCotizacionEnPedido(cot)" style="background: #16a34a; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                      Generar Guia
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="cotizaciones.length === 0">
+                <td colspan="8" style="padding: 20px; text-align: center; color: #64748b; font-style: italic;">No hay solicitudes de cotizacion registradas.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </main>
 
-  <!-- ================= MODALES ================= -->
+  <!-- ================= MODALES DE CONTROL ================= -->
   <!-- Modal Incidencias -->
-  <div *ngIf="pedidoParaIncidencia" class="modal-backdrop">
-    <div class="modal-contenido">
-      <h4>{{ pedidoParaIncidencia.incidencia ? 'Modificar Incidencia' : 'Reportar Incidencia' }} [{{ pedidoParaIncidencia.tracking }}]</h4>
-      <p>Edita o ingresa el detalle del problema en ruta reportado por el operador:</p>
-      <textarea [(ngModel)]="detalleIncidenciaTemp" rows="4" placeholder="Ej: Domicilio cerrado, cliente ausente, dirección con error..."></textarea>
-      <div class="acciones-modal">
-        <button (click)="cerrarModalIncidencia()" class="btn-secundario">Cancelar</button>
-        <button *ngIf="pedidoParaIncidencia.incidencia" (click)="solucionarIncidencia()" class="btn-resolver">
-          Marcar como Resuelta
-        </button>
-        <button (click)="guardarIncidencia()" class="btn-guardar">
-          {{ pedidoParaIncidencia.incidencia ? 'Actualizar Incidencia' : 'Registrar Incidencia' }}
-        </button>
+  <div *ngIf="pedidoParaIncidencia" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+    <div style="background: white; padding: 20px; border-radius: 6px; width: 420px; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+      <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">Gestionar Incidencia [{{ pedidoParaIncidencia.tracking }}]</h4>
+      <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">Describa el reporte operativo:</p>
+      <textarea [(ngModel)]="detalleIncidenciaTemp" rows="3" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; margin-bottom: 14px; box-sizing: border-box;"></textarea>
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button (click)="cerrarModalIncidencia()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Cancelar</button>
+        <button *ngIf="pedidoParaIncidencia.incidencia" (click)="solucionarIncidencia()" style="background: #16a34a; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Resolver</button>
+        <button (click)="guardarIncidencia()" style="background: #0f172a; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Guardar</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal Edición Orden (ADMIN) -->
-  <div *ngIf="pedidoEnEdicion" class="modal-backdrop">
-    <div class="modal-contenido">
-      <h4>Editar Orden: {{ pedidoEnEdicion.tracking }}</h4>
-      <div class="campo"><label>Cliente:</label><input type="text" [(ngModel)]="pedidoEnEdicion.cliente" /></div>
-      <div class="campo"><label>Destino:</label><input type="text" [(ngModel)]="pedidoEnEdicion.destino" /></div>
-      <div class="campo">
-        <label>Courier:</label>
-        <select [(ngModel)]="pedidoEnEdicion.courier">
-          <option *ngFor="let c of couriersDisponibles" [value]="c">{{ c }}</option>
-        </select>
-      </div>
-      <div class="campo">
-        <label>Detalle de Incidencia (dejar vacío si no hay problema):</label>
-        <input type="text" [(ngModel)]="pedidoEnEdicion.incidencia" placeholder="Sin incidencia reportada" />
-      </div>
-      <div class="acciones-modal">
-        <button (click)="cerrarModalEditar()" class="btn-secundario">Cancelar</button>
-        <button (click)="guardarEdicion()" class="btn-guardar">Guardar Cambios</button>
+  <!-- Modal Edición Orden -->
+  <div *ngIf="pedidoEnEdicion" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+    <div style="background: white; padding: 20px; border-radius: 6px; width: 420px; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+      <h4 style="margin: 0 0 12px 0; font-size: 15px; font-weight: 700; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">Editar Orden: {{ pedidoEnEdicion.tracking }}</h4>
+      <div style="margin-bottom: 10px;"><label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 3px;">Cliente:</label><input type="text" [(ngModel)]="pedidoEnEdicion.cliente" style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" /></div>
+      <div style="margin-bottom: 10px;"><label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 3px;">Destino:</label><input type="text" [(ngModel)]="pedidoEnEdicion.destino" style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" /></div>
+      <div style="margin-bottom: 10px;"><label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 3px;">Courier:</label><select [(ngModel)]="pedidoEnEdicion.courier" style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;"><option *ngFor="let c of couriersDisponibles" [value]="c">{{ c }}</option></select></div>
+      <div style="margin-bottom: 14px;"><label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 3px;">Incidencia:</label><input type="text" [(ngModel)]="pedidoEnEdicion.incidencia" style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" /></div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button (click)="cerrarModalEditar()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Cancelar</button>
+        <button (click)="guardarEdicion()" style="background: #0f172a; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Guardar</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal Edición Producto (ADMIN) -->
-  <div *ngIf="productoEnEdicion" class="modal-backdrop">
-    <div class="modal-contenido">
-      <h4>Editar Producto: {{ productoEnEdicion.sku }}</h4>
-      <div class="campo">
-        <label>Nombre:</label>
-        <input type="text" [(ngModel)]="productoEnEdicion.nombre" />
-      </div>
-      <div class="campo">
-        <label>Precio Unitario ($):</label>
-        <input type="number" [(ngModel)]="productoEnEdicion.precio" />
-      </div>
-      <div class="campo">
-        <label>Stock Físico Actual:</label>
-        <input type="number" [(ngModel)]="productoEnEdicion.stock" />
-      </div>
-      <div class="campo">
-        <label>Umbral Mínimo de Alerta:</label>
-        <input type="number" [(ngModel)]="productoEnEdicion.stockMinimo" />
-      </div>
-      <div class="acciones-modal">
-        <button (click)="cerrarModalEditarProducto()" class="btn-secundario">Cancelar</button>
-        <button (click)="guardarEdicionProducto()" class="btn-guardar">Guardar Cambios</button>
+  <!-- Modal Edición Producto -->
+  <div *ngIf="productoEnEdicion" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+    <div style="background: white; padding: 20px; border-radius: 6px; width: 420px; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+      <h4 style="margin: 0 0 12px 0; font-size: 15px; font-weight: 700; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">Editar SKU: {{ productoEnEdicion.sku }}</h4>
+      <div style="margin-bottom: 10px;"><label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 3px;">Nombre:</label><input type="text" [(ngModel)]="productoEnEdicion.nombre" style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" /></div>
+      <div style="margin-bottom: 10px;"><label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 3px;">Precio ($):</label><input type="number" [(ngModel)]="productoEnEdicion.precio" style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" /></div>
+      <div style="margin-bottom: 10px;"><label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 3px;">Stock:</label><input type="number" [(ngModel)]="productoEnEdicion.stock" style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" /></div>
+      <div style="margin-bottom: 14px;"><label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 3px;">Stock Mínimo:</label><input type="number" [(ngModel)]="productoEnEdicion.stockMinimo" style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; box-sizing: border-box;" /></div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button (click)="cerrarModalEditarProducto()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Cancelar</button>
+        <button (click)="guardarEdicionProducto()" style="background: #0f172a; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Guardar</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ================= POP-UP MODAL DE VALIDACIÓN (MÚLTIPLES CAMPOS) ================= -->
+<div *ngIf="erroresValidacion.length > 0" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.6); display: flex; justify-content: center; align-items: center; z-index: 100000; box-sizing: border-box;">
+  <div style="background: white; padding: 28px 24px; border-radius: 8px; width: 380px; border: 1px solid #cbd5e1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: left; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    
+    <p style="font-size: 14px; color: #0f172a; font-weight: 600; margin: 0 0 12px 0;">
+      Faltan rellenar los siguientes campos:
+    </p>
+
+    <ul style="margin: 0 0 22px 0; padding-left: 18px; font-size: 13px; color: #475569; display: flex; flex-direction: column; gap: 5px;">
+      <li *ngFor="let campo of erroresValidacion">{{ campo }}</li>
+    </ul>
+
+    <button (click)="cerrarModalError()" style="background: #64748b; color: white; border: none; padding: 9px 20px; border-radius: 4px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%;">
+      Entendido
+    </button>
+    
   </div>
 </div>

@@ -27,6 +27,19 @@ export interface Producto {
   precio: number;
   stock: number;
   stockMinimo: number;
+  imagen?: string;
+}
+
+export interface Cotizacion {
+  id: number;
+  cliente: string;
+  producto: string;
+  cantidad: number;
+  region: string;
+  comuna: string;
+  totalEst: number;
+  fecha: string;
+  estado: 'PENDIENTE' | 'CONTACTADO' | 'ACEPTADA' | 'RECHAZADA';
 }
 
 @Component({
@@ -42,7 +55,10 @@ export class AppComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
 
-  moduloActivo: 'PEDIDOS' | 'PRODUCTOS' = 'PEDIDOS';
+  moduloActivo: 'PEDIDOS' | 'PRODUCTOS' | 'COTIZACIONES' = 'PEDIDOS';
+
+  // Control de vistas para la landing page pública (cambio instantáneo de vista)
+  seccionPublica: 'inicio' | 'catalogo' = 'inicio';
 
   userName = 'Usuario';
   rolSeleccionado: 'OPERADOR' | 'ADMIN' = 'ADMIN';
@@ -50,6 +66,9 @@ export class AppComponent implements OnInit {
   productos: Producto[] = [];
   cargando = false;
   notificacionReciente: string = '';
+
+  // --- LISTA DE ERRORES DE VALIDACIÓN PARA EL POP-UP CENTRADO ---
+  erroresValidacion: string[] = [];
 
   private apiPedidosUrl = environment.apiUrl;
   private apiProductosUrl = environment.apiUrl.replace('/pedidos', '/productos');
@@ -78,13 +97,19 @@ export class AppComponent implements OnInit {
   // Filtro de clasificación por Estado (Exclusivo Administrador)
   filtroEstadoSeleccionado: string = 'TODOS';
 
+  // --- ESTRUCTURA DE REGIONES Y COMUNAS Y CARRITO DE MÚLTIPLES PRODUCTOS ---
+  comunasDisponibles: string[] = [];
+
   nuevoPedido = {
     cliente: '',
-    producto: 'Notebook Corporativo HP G8',
-    cantidad: 1,
-    total: 450000,
-    courier: 'Blue Express',
-    destino: 'Santiago Centro'
+    region: '',
+    comuna: '',
+    items: [] as { producto: string; cantidad: number; precioUnitario: number; subtotal: number }[],
+    productoTemp: '',
+    cantidadTemp: 1,
+    total: 0,
+    courier: '',
+    destino: ''
   };
 
   nuevoProducto: Producto = {
@@ -94,11 +119,13 @@ export class AppComponent implements OnInit {
     categoria: 'General',
     precio: 0,
     stock: 10,
-    stockMinimo: 5
+    stockMinimo: 5,
+    imagen: ''
   };
 
   ngOnInit(): void {
     this.cargarCacheLocal();
+    this.cargarCacheCotizaciones();
     this.obtenerPedidos();
     this.obtenerProductos();
 
@@ -156,9 +183,16 @@ export class AppComponent implements OnInit {
     this.auth.logout({ logoutParams: { returnTo: window.location.origin } });
   }
 
-  cambiarModulo(modulo: 'PEDIDOS' | 'PRODUCTOS'): void {
+  cambiarModulo(modulo: 'PEDIDOS' | 'PRODUCTOS' | 'COTIZACIONES'): void {
     this.ngZone.run(() => {
       this.moduloActivo = modulo;
+      this.cdr.detectChanges();
+    });
+  }
+
+  cambiarSeccionPublica(seccion: 'inicio' | 'catalogo'): void {
+    this.ngZone.run(() => {
+      this.seccionPublica = seccion;
       this.cdr.detectChanges();
     });
   }
@@ -263,29 +297,51 @@ export class AppComponent implements OnInit {
   }
 
   // --- GESTIÓN DE PRODUCTOS ---
+// Diccionario de emojis y colores corporativos por categoría
+  iconos: Record<string, { emoji: string; fondo: string }> = {
+    'Aseo': { emoji: '🧴', fondo: '#e0f2fe' },
+    'Abarrotes': { emoji: '🌾', fondo: '#fef3c7' },
+    'Bebidas': { emoji: '🥤', fondo: '#fde8ec' },
+    'Lácteos': { emoji: '🥛', fondo: '#f1f5f9' },
+    'Ferretería y Empaque': { emoji: '📦', fondo: '#ede9fe' },
+    'Oficina': { emoji: '🖇️', fondo: '#dcfce7' }
+  };
+
+  iconoDe(p: any) {
+    return this.iconos[p.categoria] || { emoji: '📦', fondo: '#f1f5f9' };
+  }
+
   obtenerProductos(): void {
-    this.http.get<Producto[]>(this.apiProductosUrl).subscribe({
+    const listaBase = [
+      { id: 1, sku: 'ASEO-001', nombre: 'Detergente Industrial 5L', descripcion: 'Bidón concentrado para aseo profundo', categoria: 'Aseo', precio: 12990, stock: 45, stockMinimo: 10 },
+      { id: 2, sku: 'ASEO-002', nombre: 'Cloro Gel Desinfectante 1L', descripcion: 'Envase individual alta desinfección', categoria: 'Aseo', precio: 2490, stock: 4, stockMinimo: 15 },
+      { id: 3, sku: 'ABAR-001', nombre: 'Arroz Grado 1 Saco 10kg', descripcion: 'Grano selecto para abastecimiento', categoria: 'Abarrotes', precio: 11500, stock: 120, stockMinimo: 20 },
+      { id: 4, sku: 'ABAR-002', nombre: 'Aceite Vegetal Comestible Bidón 5L', descripcion: 'Aceite refinado para cocinas', categoria: 'Abarrotes', precio: 9890, stock: 50, stockMinimo: 12 },
+      { id: 5, sku: 'BEB-001', nombre: 'Bebida Cola Retornable 1.5L Pack 6', descripcion: 'Ideal para almacenes', categoria: 'Bebidas', precio: 7500, stock: 80, stockMinimo: 15 },
+      { id: 6, sku: 'BEB-002', nombre: 'Agua Mineral Sin Gas 500cc Pack 24', descripcion: 'Formato individual comercial', categoria: 'Bebidas', precio: 8900, stock: 90, stockMinimo: 20 },
+      { id: 7, sku: 'LAC-001', nombre: 'Leche Entera UHT 1L Caja 12', descripcion: 'Larga vida envasada', categoria: 'Lácteos', precio: 10990, stock: 50, stockMinimo: 10 },
+      { id: 8, sku: 'FER-001', nombre: 'Cinta de Embalaje Transparente 48mmx100m', descripcion: 'Alta resistencia industrial', categoria: 'Ferretería y Empaque', precio: 1990, stock: 150, stockMinimo: 30 },
+      { id: 9, sku: 'FER-002', nombre: 'Caja de Cartón Corrugado N4 Pack 10', descripcion: 'Para envíos y bodegaje', categoria: 'Ferretería y Empaque', precio: 8500, stock: 75, stockMinimo: 15 },
+      { id: 10, sku: 'OFI-001', nombre: 'Resma Papel Bond Oficio 500 Hojas', descripcion: 'Papel certificado impresión', categoria: 'Oficina', precio: 5900, stock: 80, stockMinimo: 20 }
+    ];
+
+    this.http.get<any[]>(this.apiProductosUrl).subscribe({
       next: (data) => {
         this.ngZone.run(() => {
-          this.productos = data || [];
+          this.productos = (data && data.length > 0) ? data.slice(0, 10) : listaBase;
           this.cdr.detectChanges();
         });
       },
       error: () => {
         this.ngZone.run(() => {
-          if (this.productos.length === 0) {
-            this.productos = [
-              { id: 1, sku: 'ASEO-001', nombre: 'Detergente Industrial 5L', descripcion: 'Bidón concentrado', categoria: 'Aseo', precio: 12990, stock: 45, stockMinimo: 10 },
-              { id: 2, sku: 'ASEO-002', nombre: 'Cloro Gel Desinfectante 1L', descripcion: 'Envase individual', categoria: 'Aseo', precio: 2490, stock: 4, stockMinimo: 15 },
-              { id: 3, sku: 'ABAR-001', nombre: 'Arroz Grado 1 (1kg)', descripcion: 'Bolsa individual', categoria: 'Abarrotes', precio: 1350, stock: 120, stockMinimo: 20 }
-            ];
-          }
+          this.productos = listaBase;
           this.cdr.detectChanges();
         });
       }
     });
   }
 
+   
   guardarNuevoProducto(): void {
     if (!this.nuevoProducto.sku.trim() || !this.nuevoProducto.nombre.trim()) {
       alert('Debe ingresar SKU y Nombre del producto.');
@@ -312,7 +368,7 @@ export class AppComponent implements OnInit {
   }
 
   resetFormularioProducto(): void {
-    this.nuevoProducto = { sku: '', nombre: '', descripcion: '', categoria: 'General', precio: 0, stock: 10, stockMinimo: 5 };
+    this.nuevoProducto = { sku: '', nombre: '', descripcion: '', categoria: 'General', precio: 0, stock: 10, stockMinimo: 5, imagen: '' };
     this.mostrarFormularioProducto = false;
     this.cdr.detectChanges();
   }
@@ -428,21 +484,109 @@ export class AppComponent implements OnInit {
     };
   }
 
+  onRegionChange(event: any): void {
+    const regionSeleccionada = event.target.value;
+    this.ngZone.run(() => {
+      this.nuevoPedido.region = regionSeleccionada;
+      this.nuevoPedido.comuna = ''; 
+
+      if (regionSeleccionada === 'Metropolitana') {
+        this.comunasDisponibles = ['Santiago', 'Padre Hurtado', 'Colina (Chicureo)', 'Providencia', 'Las Condes', 'Maipú', 'Puente Alto'];
+      } else if (regionSeleccionada === 'Valparaiso') {
+        this.comunasDisponibles = ['Valparaíso', 'Viña del Mar', 'Concón', 'Villa Alemana', 'Quilpué'];
+      } else if (regionSeleccionada === 'OHiggins') {
+        this.comunasDisponibles = ['Rancagua', 'Machalí', 'San Fernando', 'Rengo'];
+      } else {
+        this.comunasDisponibles = [];
+      }
+      this.cdr.detectChanges();
+    });
+  }
+
+  // --- MÉTODOS DEL CARRITO ---
+  agregarItemAlPedido(): void {
+    this.ngZone.run(() => {
+      if (!this.nuevoPedido.productoTemp) {
+        return;
+      }
+      const cant = Number(this.nuevoPedido.cantidadTemp) || 1;
+      if (cant <= 0) return;
+
+      const prod = this.productos.find(p => p.nombre === this.nuevoPedido.productoTemp);
+      if (!prod) return;
+
+      const subtotal = prod.precio * cant;
+      this.nuevoPedido.items.push({
+        producto: prod.nombre,
+        cantidad: cant,
+        precioUnitario: prod.precio,
+        subtotal: subtotal
+      });
+
+      this.calcularTotalGeneral();
+      this.nuevoPedido.productoTemp = '';
+      this.nuevoPedido.cantidadTemp = 1;
+      this.cdr.detectChanges();
+    });
+  }
+
+  quitarItemPedido(index: number): void {
+    this.ngZone.run(() => {
+      this.nuevoPedido.items.splice(index, 1);
+      this.calcularTotalGeneral();
+      this.cdr.detectChanges();
+    });
+  }
+
+  calcularTotalGeneral(): void {
+    this.nuevoPedido.total = this.nuevoPedido.items.reduce((acc, item) => acc + item.subtotal, 0);
+  }
+
   guardarNuevoPedido(): void {
     if (this.rolSeleccionado !== 'ADMIN') return;
-    if (!this.nuevoPedido.cliente.trim() || !this.nuevoPedido.destino.trim()) {
-      alert('Debe ingresar cliente y destino.');
-      return;
-    }
+    
+    this.ngZone.run(() => {
+      this.erroresValidacion = [];
+
+      if (!this.nuevoPedido.cliente || !this.nuevoPedido.cliente.trim()) {
+        this.erroresValidacion.push('Nombre del cliente');
+      }
+      if (!this.nuevoPedido.region) {
+        this.erroresValidacion.push('Región de destino');
+      }
+      if (!this.nuevoPedido.comuna) {
+        this.erroresValidacion.push('Comuna de destino');
+      }
+      if (this.nuevoPedido.items.length === 0) {
+        this.erroresValidacion.push('Debe agregar al menos 1 producto al detalle');
+      }
+      if (this.nuevoPedido.total === undefined || this.nuevoPedido.total === null || Number(this.nuevoPedido.total) <= 0) {
+        this.erroresValidacion.push('Monto total válido (calculado automáticamente)');
+      }
+      if (!this.nuevoPedido.courier) {
+        this.erroresValidacion.push('Courier de despacho');
+      }
+
+      if (this.erroresValidacion.length > 0) {
+        this.cdr.detectChanges();
+        return;
+      }
+    });
+
+    if (this.erroresValidacion.length > 0) return;
+
+    const resumenProductos = this.nuevoPedido.items.map(i => `${i.cantidad}x ${i.producto}`).join(', ');
+    const cantidadTotalUnidades = this.nuevoPedido.items.reduce((acc, i) => acc + i.cantidad, 0);
+    const destinoConsolidado = `${this.nuevoPedido.comuna}, ${this.nuevoPedido.region}`;
 
     const payload: Pedido = {
       tracking: `TRK-CL-${Math.floor(1000 + Math.random() * 9000)}`,
       cliente: this.nuevoPedido.cliente.trim(),
-      producto: this.nuevoPedido.producto,
-      cantidad: Number(this.nuevoPedido.cantidad),
+      producto: resumenProductos,
+      cantidad: cantidadTotalUnidades,
       total: Number(this.nuevoPedido.total),
       courier: this.nuevoPedido.courier,
-      destino: this.nuevoPedido.destino.trim(),
+      destino: destinoConsolidado,
       estado: 'En Preparacion'
     };
 
@@ -450,7 +594,7 @@ export class AppComponent implements OnInit {
       next: (creado) => {
         this.ngZone.run(() => {
           this.pedidos.unshift(this.normalizarPedido(creado));
-          this.notificacionReciente = `Guía creada: ${payload.tracking}`;
+          this.notificacionReciente = `Guía creada con éxito: ${payload.tracking}`;
           this.guardarCacheLocal();
           this.resetFormulario();
         });
@@ -458,11 +602,18 @@ export class AppComponent implements OnInit {
       error: () => {
         this.ngZone.run(() => {
           this.pedidos.unshift({ ...payload, id: Date.now() });
-          this.notificacionReciente = `Guía creada: ${payload.tracking}`;
+          this.notificacionReciente = `Guía creada con éxito: ${payload.tracking}`;
           this.guardarCacheLocal();
           this.resetFormulario();
         });
       }
+    });
+  }
+
+  cerrarModalError(): void {
+    this.ngZone.run(() => {
+      this.erroresValidacion = [];
+      this.cdr.detectChanges();
     });
   }
 
@@ -508,7 +659,8 @@ export class AppComponent implements OnInit {
   }
 
   resetFormulario(): void {
-    this.nuevoPedido = { cliente: '', producto: 'Notebook Corporativo HP G8', cantidad: 1, total: 450000, courier: 'Blue Express', destino: 'Santiago Centro' };
+    this.nuevoPedido = { cliente: '', region: '', comuna: '', items: [], productoTemp: '', cantidadTemp: 1, total: 0, courier: '', destino: '' };
+    this.comunasDisponibles = [];
     this.mostrarFormularioCreacion = false;
     this.cdr.detectChanges();
   }
@@ -529,9 +681,140 @@ export class AppComponent implements OnInit {
     });
   }
 
-  // Métodos de conteo para alimentar métricas y gráficos
   getCount(estado: string): number { return this.pedidos.filter(p => p.estado === estado).length; }
   getCountRuta(): number { return this.pedidos.filter(p => p.estado === 'En Transito' || p.estado === 'En Reparto').length; }
   getCountIncidencias(): number { return this.pedidos.filter(p => p.estado === 'Incidencia en Ruta' || (p.incidencia && p.incidencia.trim() !== '')).length; }
   getAlertasStockCount(): number { return this.productos.filter(p => p.stock <= p.stockMinimo).length; }
+
+  cotizaciones: Cotizacion[] = [];
+  mostrarModalCotizar = false;
+  productoSeleccionadoParaCotizar: any = null;
+
+  nuevaCotizacion = {
+    cliente: '',
+    email: '',
+    region: '',
+    comuna: '',
+    cantidad: 1,
+    comunasDisponiblesPublicas: [] as string[]
+  };
+
+  abrirModalCotizar(prod: any): void {
+    this.ngZone.run(() => {
+      this.productoSeleccionadoParaCotizar = prod;
+      this.nuevaCotizacion = { cliente: '', email: '', region: '', comuna: '', cantidad: 1, comunasDisponiblesPublicas: [] };
+      this.mostrarModalCotizar = true;
+      this.cdr.detectChanges();
+    });
+  }
+
+  cerrarModalCotizar(): void {
+    this.ngZone.run(() => {
+      this.mostrarModalCotizar = false;
+      this.productoSeleccionadoParaCotizar = null;
+      this.cdr.detectChanges();
+    });
+  }
+
+  onRegionCotizacionChange(event: any): void {
+    const reg = event.target.value;
+    this.ngZone.run(() => {
+      this.nuevaCotizacion.region = reg;
+      this.nuevaCotizacion.comuna = '';
+      if (reg === 'Metropolitana') {
+        this.nuevaCotizacion.comunasDisponiblesPublicas = ['Santiago', 'Padre Hurtado', 'Colina (Chicureo)', 'Providencia', 'Las Condes', 'Maipú', 'Puente Alto'];
+      } else if (reg === 'Valparaiso') {
+        this.nuevaCotizacion.comunasDisponiblesPublicas = ['Valparaíso', 'Viña del Mar', 'Concón', 'Villa Alemana', 'Quilpué'];
+      } else if (reg === 'OHiggins') {
+        this.nuevaCotizacion.comunasDisponiblesPublicas = ['Rancagua', 'Machalí', 'San Fernando', 'Rengo'];
+      } else {
+        this.nuevaCotizacion.comunasDisponiblesPublicas = [];
+      }
+      this.cdr.detectChanges();
+    });
+  }
+
+  enviarSolicitudCotizacion(): void {
+    if (!this.nuevaCotizacion.cliente.trim() || !this.nuevaCotizacion.region || !this.nuevaCotizacion.comuna || !this.productoSeleccionadoParaCotizar) {
+      alert('Por favor complete todos los campos obligatorios para la cotizacion.');
+      return;
+    }
+
+    const subtotal = this.productoSeleccionadoParaCotizar.precio * this.nuevaCotizacion.cantidad;
+    const nuevaCot: Cotizacion = {
+      id: Date.now(),
+      cliente: this.nuevaCotizacion.cliente.trim(),
+      producto: this.productoSeleccionadoParaCotizar.nombre,
+      cantidad: Number(this.nuevaCotizacion.cantidad),
+      region: this.nuevaCotizacion.region,
+      comuna: this.nuevaCotizacion.comuna,
+      totalEst: subtotal,
+      fecha: new Date().toLocaleDateString(),
+      estado: 'PENDIENTE'
+    };
+
+    this.ngZone.run(() => {
+      this.cotizaciones.unshift(nuevaCot);
+      localStorage.setItem('cotizaciones_app_data', JSON.stringify(this.cotizaciones));
+      alert('Cotizacion enviada con exito. El equipo comercial la revisara en la torre de control.');
+      this.cerrarModalCotizar();
+      this.cdr.detectChanges();
+    });
+  }
+
+  cambiarEstadoCotizacion(cot: Cotizacion, nuevoEstado: 'PENDIENTE' | 'CONTACTADO' | 'ACEPTADA' | 'RECHAZADA'): void {
+    this.ngZone.run(() => {
+      cot.estado = nuevoEstado;
+      localStorage.setItem('cotizaciones_app_data', JSON.stringify(this.cotizaciones));
+      this.notificacionReciente = `Cotizacion de [${cot.cliente}] actualizada a: ${nuevoEstado}`;
+      this.cdr.detectChanges();
+    });
+  }
+
+convertirCotizacionEnPedido(cot: Cotizacion): void {
+    if (cot.estado !== 'ACEPTADA') {
+      alert('La cotización debe estar marcada como Aceptada por Cliente para generar la guía.');
+      return;
+    }
+
+    // Buscar el producto en el inventario actual para validar stock
+    const productoInventario = this.productos.find(p => 
+      p.nombre.toLowerCase().includes(cot.producto.toLowerCase()) || 
+      cot.producto.toLowerCase().includes(p.nombre.toLowerCase())
+    );
+
+    if (productoInventario && cot.cantidad > productoInventario.stock) {
+      alert(`Alerta de stock insuficiente. Stock disponible: ${productoInventario.stock} unidades. Se intentaron procesar ${cot.cantidad} unidades para "${productoInventario.nombre}".`);
+      return;
+    }
+
+    this.ngZone.run(() => {
+      const nuevoPedidoDesdeCot = {
+        id: Date.now(),
+        tracking: `TRK-CL-${Math.floor(1000 + Math.random() * 9000)}`,
+        cliente: cot.cliente,
+        producto: `${cot.cantidad}x ${cot.producto}`,
+        cantidad: cot.cantidad,
+        total: cot.totalEst,
+        courier: 'Blue Express',
+        destino: `${cot.comuna}, ${cot.region}`,
+        estado: 'En Preparacion'
+      };
+
+      // Descontar stock automáticamente si existe el producto
+      if (productoInventario) {
+        productoInventario.stock = Math.max(0, productoInventario.stock - cot.cantidad);
+      }
+
+      this.pedidos.unshift(nuevoPedidoDesdeCot);
+      this.guardarCacheLocal();
+      this.notificacionReciente = `Guía ${nuevoPedidoDesdeCot.tracking} generada para bodega a partir de la cotización.`;
+      this.cdr.detectChanges();
+    });
+  }
+
+  cargarCacheCotizaciones(): void {
+    const cache = localStorage.getItem('cotizaciones_app_data');
+    if (cache) this.cotizaciones = JSON.parse(cache);
+  }
 }

@@ -1,85 +1,78 @@
-.container {
-  font-family: system-ui, -apple-system, sans-serif;
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 20px;
-  color: #333;
+/* Importar las fuentes de Google Fonts (Serif elegante + Sans-serif limpia) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
+
+html {
+  scroll-behavior: smooth;
+}
+:root {
+  --color-crema: #F7F4F0;
+  --color-navy: #1B2A4A;
+  --color-verde: #2D6A4F;
+  --color-card: #FFFFFF;
+  --color-texto: #2C221E;
 }
 
+body {
+  background-color: var(--color-crema);
+  color: var(--color-texto);
+  font-family: 'Inter', sans-serif; /* Tipografía limpia para textos */
+  margin: 0;
+  padding: 2rem;
+}
+
+/* Aplicar la fuente elegante de títulos */
+h1, h2, h3, .hero-content h1 {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Barra de navegación superior */
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 2px solid #eee;
-  padding-bottom: 15px;
+  background: var(--color-navy);
+  color: #FFFFFF;
+  padding: 1rem 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 
-.user-menu {
-  display: flex;
-  align-items: center;
-  gap: 15px;
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-size: 1.2rem;
 }
 
-.main-content {
-  margin-top: 30px;
-}
-
-.login-card {
-  text-align: center;
-  padding: 50px 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  background: #fafafa;
-}
-
-.card {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 20px;
-  background: white;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 12px 14px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-}
-
-th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-}
-
-.badge {
-  background-color: #e3f2fd;
-  color: #0d47a1;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 13px;
-}
-
-.btn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
+.nav-links a {
+  color: #E2E8F0;
+  text-decoration: none;
+  margin: 0 1rem;
+  font-size: 0.85rem;
   font-weight: 500;
+  font-family: 'Inter', sans-serif;
 }
 
-.btn-primary { background: #0078d4; color: white; }
-.btn-secondary { background: #e0e0e0; color: #333; }
-.btn-outline { background: transparent; border: 1px solid #ccc; }
-.alert-error { background: #ffebee; color: #c62828; padding: 10px; border-radius: 6px; margin: 10px 0; }
-.loading { color: #666; font-style: italic; }
+.nav-links a:hover, .nav-links a.active {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+}
+
+/* Botón de acción principal con el verde seleccionado */
+.btn-primary {
+  background-color: var(--color-verde);
+  color: #FFFFFF;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
