@@ -69,9 +69,8 @@ export class AppComponent implements OnInit {
 
   // --- LISTA DE ERRORES DE VALIDACIÓN PARA EL POP-UP CENTRADO ---
   erroresValidacion: string[] = [];
-
-  private apiPedidosUrl = environment.apiUrl;
-  private apiProductosUrl = environment.apiUrl.replace('/pedidos', '/productos');
+private apiPedidosUrl = environment.apiUrl;
+private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos');
 
   // Estados completos del flujo logístico
   estadosDisponibles: string[] = [
