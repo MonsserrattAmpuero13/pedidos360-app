@@ -16,7 +16,7 @@ export const appConfig: ApplicationConfig = {
       clientId: 'Q8W8Bv8LC9PzxkMki1pZzo9JgmUCiPzB',
       authorizationParams: {
         redirect_uri: window.location.origin,
-        //audience: 'https://api-pedidos-360.azurewebsites.net'
+        audience: 'https://api-pedidos-360.azurewebsites.net'
       },
       httpInterceptor: {
         allowedList: [
