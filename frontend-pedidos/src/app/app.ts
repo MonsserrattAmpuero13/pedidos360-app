@@ -69,6 +69,7 @@ export class AppComponent implements OnInit {
 
   // --- LISTA DE ERRORES DE VALIDACIÓN PARA EL POP-UP CENTRADO ---
   erroresValidacion: string[] = [];
+
 private apiPedidosUrl = environment.apiUrl;
 private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos');
 
@@ -769,49 +770,54 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
       this.cdr.detectChanges();
     });
   }
-
-convertirCotizacionEnPedido(cot: Cotizacion): void {
-    if (cot.estado !== 'ACEPTADA') {
-      alert('La cotización debe estar marcada como Aceptada por Cliente para generar la guía.');
-      return;
-    }
-
-    // Buscar el producto en el inventario actual para validar stock
-    const productoInventario = this.productos.find(p => 
-      p.nombre.toLowerCase().includes(cot.producto.toLowerCase()) || 
-      cot.producto.toLowerCase().includes(p.nombre.toLowerCase())
-    );
-
-    if (productoInventario && cot.cantidad > productoInventario.stock) {
-      alert(`Alerta de stock insuficiente. Stock disponible: ${productoInventario.stock} unidades. Se intentaron procesar ${cot.cantidad} unidades para "${productoInventario.nombre}".`);
-      return;
-    }
-
-    this.ngZone.run(() => {
-      const nuevoPedidoDesdeCot = {
-        id: Date.now(),
-        tracking: `TRK-CL-${Math.floor(1000 + Math.random() * 9000)}`,
-        cliente: cot.cliente,
-        producto: `${cot.cantidad}x ${cot.producto}`,
-        cantidad: cot.cantidad,
-        total: cot.totalEst,
-        courier: 'Blue Express',
-        destino: `${cot.comuna}, ${cot.region}`,
-        estado: 'En Preparacion'
-      };
-
-      // Descontar stock automáticamente si existe el producto
-      if (productoInventario) {
-        productoInventario.stock = Math.max(0, productoInventario.stock - cot.cantidad);
-      }
-
-      this.pedidos.unshift(nuevoPedidoDesdeCot);
-      this.guardarCacheLocal();
-      this.notificacionReciente = `Guía ${nuevoPedidoDesdeCot.tracking} generada para bodega a partir de la cotización.`;
-      this.cdr.detectChanges();
-    });
+  convertirCotizacionEnPedido(cot: Cotizacion): void {
+  if (cot.estado !== 'ACEPTADA') {
+    alert('La cotización debe estar marcada como Aceptada por Cliente para generar la guía.');
+    return;
   }
 
+  const productoInventario = this.productos.find(p =>
+    p.nombre.toLowerCase().includes(cot.producto.toLowerCase()) ||
+    cot.producto.toLowerCase().includes(p.nombre.toLowerCase())
+  );
+
+  if (productoInventario && cot.cantidad > productoInventario.stock) {
+    alert(`Alerta de stock insuficiente. Stock disponible: ${productoInventario.stock} unidades. Se intentaron procesar ${cot.cantidad} unidades para "${productoInventario.nombre}".`);
+    return;
+  }
+
+  const payload: Pedido = {
+    tracking: `TRK-CL-${Math.floor(1000 + Math.random() * 9000)}`,
+    cliente: cot.cliente,
+    producto: `${cot.cantidad}x ${cot.producto}`,
+    cantidad: cot.cantidad,
+    total: cot.totalEst,
+    courier: 'Blue Express',
+    destino: `${cot.comuna}, ${cot.region}`,
+    estado: 'En Preparacion'
+  };
+
+  this.http.post<Pedido>(this.apiPedidosUrl, payload).subscribe({
+    next: (creado) => {
+      this.ngZone.run(() => {
+        this.pedidos.unshift(this.normalizarPedido(creado));
+        if (productoInventario) {
+          productoInventario.stock = Math.max(0, productoInventario.stock - cot.cantidad);
+        }
+        this.guardarCacheLocal();
+        this.notificacionReciente = `Guía ${payload.tracking} generada para bodega a partir de la cotización.`;
+        this.cdr.detectChanges();
+      });
+    },
+    error: (e) => {
+      console.error('POST pedido desde cotización falló:', e);
+      this.ngZone.run(() => {
+        this.notificacionReciente = 'No se pudo generar la guía en el servidor';
+        this.cdr.detectChanges();
+      });
+    }
+  });
+}
   cargarCacheCotizaciones(): void {
     const cache = localStorage.getItem('cotizaciones_app_data');
     if (cache) this.cotizaciones = JSON.parse(cache);
