@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Logs, base de datos local y archivos locales
+log.txt
+*.log
+data/
+.env
+.env.local
+application-local.yml

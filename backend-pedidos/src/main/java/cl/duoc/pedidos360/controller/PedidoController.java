@@ -1,5 +1,6 @@
 package cl.duoc.pedidos360.controller;
-
+import cl.duoc.pedidos360.messaging.PedidoEvent;
+import cl.duoc.pedidos360.messaging.PedidoEventPublisher;
 import cl.duoc.pedidos360.model.Pedido;
 import cl.duoc.pedidos360.Service.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,9 @@ public class PedidoController {
     @Autowired
     private PedidoService pedidoService;
 
+    @Autowired
+    private PedidoEventPublisher publisher;
+
     @GetMapping
     public ResponseEntity<List<Pedido>> listarTodos() {
         return ResponseEntity.ok(pedidoService.listarTodos());
@@ -25,7 +29,14 @@ public class PedidoController {
 
     @PostMapping
     public ResponseEntity<Pedido> guardar(@RequestBody Pedido pedido) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(pedidoService.guardarOActualizar(pedido));
+        Pedido guardado = pedidoService.guardarOActualizar(pedido);
+        publisher.pedidoCreado(new PedidoEvent(
+                guardado.getId(),
+                guardado.getTracking(),
+                guardado.getCliente(),
+                guardado.getDestino(),
+                guardado.getTotal()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(guardado);
     }
 
     @PatchMapping("/{id}/estado")
