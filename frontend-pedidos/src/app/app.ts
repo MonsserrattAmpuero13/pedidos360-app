@@ -63,7 +63,7 @@ export class AppComponent implements OnInit {
   userName = 'Usuario';
   rolSeleccionado: 'OPERADOR' | 'ADMIN' = 'ADMIN';
   pedidos: Pedido[] = [];
-  productos: Producto[] = [];
+  productos: Producto[] = this.catalogoRespaldo(); // se muestra al instante; los datos del servidor lo reemplazan al llegar
   cargando = false;
   notificacionReciente: string = '';
 
