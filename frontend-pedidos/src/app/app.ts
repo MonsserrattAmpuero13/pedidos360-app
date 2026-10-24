@@ -330,7 +330,7 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
       { id: 9, sku: 'FER-002', nombre: 'Caja de Cartón Corrugado N4 Pack 10', descripcion: 'Para envíos y bodegaje', categoria: 'Ferretería y Empaque', precio: 8500, stock: 75, stockMinimo: 15 },
       { id: 10, sku: 'OFI-001', nombre: 'Resma Papel Bond Oficio 500 Hojas', descripcion: 'Papel certificado impresión', categoria: 'Oficina', precio: 5900, stock: 80, stockMinimo: 20 }
     ];
-    return base.map(p => ({ ...p, imagen: `productos/${p.sku}.svg` }));
+    return base.map(p => ({ ...p, imagen: `productos/${p.sku}.jpg` }));
   }
 
   // El backend entrega "stockActual"; la pantalla trabaja con "stock"
