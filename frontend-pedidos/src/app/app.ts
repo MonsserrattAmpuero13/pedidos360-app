@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '@auth0/auth0-angular';
 import { environment } from '../environments/environment';
@@ -136,6 +136,8 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
 
     this.auth.isAuthenticated$.subscribe(autenticado => {
       console.log('¿Estado de autenticación?:', autenticado);
+      // Al iniciar sesión se vuelve a pedir el catálogo, ahora con el token
+      if (autenticado) this.obtenerProductos();
     });
 
     // Sincronización del perfil de Auth0 y detección de ROL
@@ -311,10 +313,14 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
     return this.iconos[p.categoria] || { emoji: '📦', fondo: '#f1f5f9' };
   }
 
-  obtenerProductos(): void {
-    const listaBase = [
+  // Indica si el catálogo viene del servidor o de la lista de respaldo (sin conexión al backend)
+  catalogoDesdeServidor = false;
+
+  // Lista de respaldo: solo se usa si el backend no responde
+  private catalogoRespaldo(): Producto[] {
+    const base = [
       { id: 1, sku: 'ASEO-001', nombre: 'Detergente Industrial 5L', descripcion: 'Bidón concentrado para aseo profundo', categoria: 'Aseo', precio: 12990, stock: 45, stockMinimo: 10 },
-      { id: 2, sku: 'ASEO-002', nombre: 'Cloro Gel Desinfectante 1L', descripcion: 'Envase individual alta desinfección', categoria: 'Aseo', precio: 2490, stock: 4, stockMinimo: 15 },
+      { id: 2, sku: 'ASEO-002', nombre: 'Cloro Gel Desinfectante 1L', descripcion: 'Envase individual alta desinfección', categoria: 'Aseo', precio: 2490, stock: 40, stockMinimo: 15 },
       { id: 3, sku: 'ABAR-001', nombre: 'Arroz Grado 1 Saco 10kg', descripcion: 'Grano selecto para abastecimiento', categoria: 'Abarrotes', precio: 11500, stock: 120, stockMinimo: 20 },
       { id: 4, sku: 'ABAR-002', nombre: 'Aceite Vegetal Comestible Bidón 5L', descripcion: 'Aceite refinado para cocinas', categoria: 'Abarrotes', precio: 9890, stock: 50, stockMinimo: 12 },
       { id: 5, sku: 'BEB-001', nombre: 'Bebida Cola Retornable 1.5L Pack 6', descripcion: 'Ideal para almacenes', categoria: 'Bebidas', precio: 7500, stock: 80, stockMinimo: 15 },
@@ -324,44 +330,79 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
       { id: 9, sku: 'FER-002', nombre: 'Caja de Cartón Corrugado N4 Pack 10', descripcion: 'Para envíos y bodegaje', categoria: 'Ferretería y Empaque', precio: 8500, stock: 75, stockMinimo: 15 },
       { id: 10, sku: 'OFI-001', nombre: 'Resma Papel Bond Oficio 500 Hojas', descripcion: 'Papel certificado impresión', categoria: 'Oficina', precio: 5900, stock: 80, stockMinimo: 20 }
     ];
+    return base.map(p => ({ ...p, imagen: `productos/${p.sku}.svg` }));
+  }
 
+  // El backend entrega "stockActual"; la pantalla trabaja con "stock"
+  private normalizarProducto(p: any): Producto {
+    return {
+      id: p.id,
+      sku: p.sku,
+      nombre: p.nombre,
+      descripcion: p.descripcion ?? '',
+      categoria: p.categoria ?? 'General',
+      precio: Number(p.precio),
+      stock: Number(p.stock ?? p.stockActual ?? 0),
+      stockMinimo: Number(p.stockMinimo ?? 0),
+      imagen: p.imagen || ''
+    };
+  }
+
+  // Formato que espera el backend al crear o editar un producto
+  private toApiProducto(p: Producto): any {
+    return {
+      id: p.id,
+      sku: p.sku,
+      nombre: p.nombre,
+      descripcion: p.descripcion,
+      categoria: p.categoria,
+      precio: p.precio,
+      stockActual: p.stock,
+      stockMinimo: p.stockMinimo,
+      imagen: p.imagen || null
+    };
+  }
+
+  obtenerProductos(): void {
     this.http.get<any[]>(this.apiProductosUrl).subscribe({
       next: (data) => {
         this.ngZone.run(() => {
-          this.productos = (data && data.length > 0) ? data.slice(0, 10) : listaBase;
+          this.catalogoDesdeServidor = true;
+          this.productos = (data ?? []).map(p => this.normalizarProducto(p));
           this.cdr.detectChanges();
         });
       },
-      error: () => {
+      error: (e) => {
+        console.error('No se pudo cargar el catálogo desde el servidor, se usa la lista de respaldo:', e);
         this.ngZone.run(() => {
-          this.productos = listaBase;
+          this.catalogoDesdeServidor = false;
+          this.productos = this.catalogoRespaldo();
           this.cdr.detectChanges();
         });
       }
     });
   }
 
-   
   guardarNuevoProducto(): void {
     if (!this.nuevoProducto.sku.trim() || !this.nuevoProducto.nombre.trim()) {
       alert('Debe ingresar SKU y Nombre del producto.');
       return;
     }
 
-    this.http.post<Producto>(this.apiProductosUrl, this.nuevoProducto).subscribe({
+    this.http.post<any>(this.apiProductosUrl, this.toApiProducto(this.nuevoProducto)).subscribe({
       next: (creado) => {
         this.ngZone.run(() => {
-          this.productos.unshift(creado);
-          this.notificacionReciente = `Producto registrado: ${creado.nombre} (${creado.sku})`;
+          const prod = this.normalizarProducto(creado);
+          this.productos.unshift(prod);
+          this.notificacionReciente = `Producto registrado: ${prod.nombre} (${prod.sku})`;
           this.resetFormularioProducto();
         });
       },
-      error: () => {
+      error: (e) => {
+        console.error('POST producto falló:', e);
         this.ngZone.run(() => {
-          const localProd = { ...this.nuevoProducto, id: Date.now() };
-          this.productos.unshift(localProd);
-          this.notificacionReciente = `Producto guardado: ${localProd.nombre}`;
-          this.resetFormularioProducto();
+          this.notificacionReciente = 'No se pudo registrar el producto en el servidor';
+          this.cdr.detectChanges();
         });
       }
     });
@@ -392,9 +433,15 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
     if (!this.productoEnEdicion?.id) return;
 
     const editado = { ...this.productoEnEdicion };
-    this.http.put<Producto>(`${this.apiProductosUrl}/${editado.id}`, editado).subscribe({
-      next: () => this.aplicarEdicionProductoLocal(editado),
-      error: () => this.aplicarEdicionProductoLocal(editado)
+    this.http.put<any>(`${this.apiProductosUrl}/${editado.id}`, this.toApiProducto(editado)).subscribe({
+      next: (guardado) => this.aplicarEdicionProductoLocal(this.normalizarProducto(guardado)),
+      error: (e) => {
+        console.error('PUT producto falló:', e);
+        this.ngZone.run(() => {
+          this.notificacionReciente = `No se pudo actualizar ${editado.sku} en el servidor`;
+          this.cdr.detectChanges();
+        });
+      }
     });
   }
 
@@ -412,7 +459,8 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
 
   ajustarStockRapido(producto: Producto, delta: number): void {
     if (this.rolSeleccionado !== 'ADMIN') return;
-    const nuevoStock = Math.max(0, producto.stock + delta);
+    const stockAnterior = producto.stock;
+    const nuevoStock = Math.max(0, stockAnterior + delta);
     producto.stock = nuevoStock;
 
     this.http.patch(`${this.apiProductosUrl}/${producto.id}/stock`, { stock: nuevoStock }).subscribe({
@@ -420,8 +468,10 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
         this.notificacionReciente = `Stock de ${producto.nombre}: ${nuevoStock} unidades`;
         this.cdr.detectChanges();
       },
-      error: () => {
-        this.notificacionReciente = `Stock de ${producto.nombre}: ${nuevoStock} unidades`;
+      error: (e) => {
+        console.error('PATCH stock falló:', e);
+        producto.stock = stockAnterior; // se deshace el cambio: el servidor no lo guardó
+        this.notificacionReciente = `No se pudo actualizar el stock de ${producto.nombre} en el servidor`;
         this.cdr.detectChanges();
       }
     });
@@ -432,7 +482,13 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
     if (confirm(`¿Seguro que deseas eliminar el producto ${sku} del catálogo?`)) {
       this.http.delete(`${this.apiProductosUrl}/${id}`).subscribe({
         next: () => this.removerProductoLocal(id, sku),
-        error: () => this.removerProductoLocal(id, sku)
+        error: (e) => {
+          console.error('DELETE producto falló:', e);
+          this.ngZone.run(() => {
+            this.notificacionReciente = `No se pudo eliminar ${sku} en el servidor`;
+            this.cdr.detectChanges();
+          });
+        }
       });
     }
   }
@@ -770,54 +826,115 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
       this.cdr.detectChanges();
     });
   }
+  // Ids de cotizaciones cuya guía se está generando (evita el doble clic)
+  generandoGuia = new Set<number>();
+
+  productoDeCotizacion(cot: Cotizacion): Producto | undefined {
+    const nombre = cot.producto.toLowerCase();
+    return this.productos.find(p => p.nombre.toLowerCase() === nombre)
+      ?? this.productos.find(p => p.nombre.toLowerCase().includes(nombre) || nombre.includes(p.nombre.toLowerCase()));
+  }
+
+  stockInsuficiente(cot: Cotizacion): boolean {
+    const prod = this.productoDeCotizacion(cot);
+    return !!prod && cot.cantidad > prod.stock;
+  }
+
+  guardarCacheCotizaciones(): void {
+    localStorage.setItem('cotizaciones_app_data', JSON.stringify(this.cotizaciones));
+  }
+
   convertirCotizacionEnPedido(cot: Cotizacion): void {
-  if (cot.estado !== 'ACEPTADA') {
-    alert('La cotización debe estar marcada como Aceptada por Cliente para generar la guía.');
-    return;
-  }
-
-  const productoInventario = this.productos.find(p =>
-    p.nombre.toLowerCase().includes(cot.producto.toLowerCase()) ||
-    cot.producto.toLowerCase().includes(p.nombre.toLowerCase())
-  );
-
-  if (productoInventario && cot.cantidad > productoInventario.stock) {
-    alert(`Alerta de stock insuficiente. Stock disponible: ${productoInventario.stock} unidades. Se intentaron procesar ${cot.cantidad} unidades para "${productoInventario.nombre}".`);
-    return;
-  }
-
-  const payload: Pedido = {
-    tracking: `TRK-CL-${Math.floor(1000 + Math.random() * 9000)}`,
-    cliente: cot.cliente,
-    producto: `${cot.cantidad}x ${cot.producto}`,
-    cantidad: cot.cantidad,
-    total: cot.totalEst,
-    courier: 'Blue Express',
-    destino: `${cot.comuna}, ${cot.region}`,
-    estado: 'En Preparacion'
-  };
-
-  this.http.post<Pedido>(this.apiPedidosUrl, payload).subscribe({
-    next: (creado) => {
-      this.ngZone.run(() => {
-        this.pedidos.unshift(this.normalizarPedido(creado));
-        if (productoInventario) {
-          productoInventario.stock = Math.max(0, productoInventario.stock - cot.cantidad);
-        }
-        this.guardarCacheLocal();
-        this.notificacionReciente = `Guía ${payload.tracking} generada para bodega a partir de la cotización.`;
-        this.cdr.detectChanges();
-      });
-    },
-    error: (e) => {
-      console.error('POST pedido desde cotización falló:', e);
-      this.ngZone.run(() => {
-        this.notificacionReciente = 'No se pudo generar la guía en el servidor';
-        this.cdr.detectChanges();
-      });
+    if (cot.estado !== 'ACEPTADA') {
+      alert('La cotización debe estar marcada como Aceptada por Cliente para generar la guía.');
+      return;
     }
-  });
-}
+    if (this.generandoGuia.has(cot.id)) return;
+
+    const prod = this.productoDeCotizacion(cot);
+    if (prod && cot.cantidad > prod.stock) {
+      alert(`Alerta de stock insuficiente. Stock disponible: ${prod.stock} unidades. Se intentaron procesar ${cot.cantidad} unidades para "${prod.nombre}".`);
+      return;
+    }
+
+    this.generandoGuia.add(cot.id);
+    const descuentaEnServidor = !!prod && !!prod.id && this.catalogoDesdeServidor;
+    const stockAnterior = prod ? prod.stock : 0;
+
+    const liberar = () => {
+      this.generandoGuia.delete(cot.id);
+      this.cdr.detectChanges();
+    };
+
+    const crearPedido = () => {
+      const payload: Pedido = {
+        tracking: `TRK-CL-${Math.floor(1000 + Math.random() * 9000)}`,
+        cliente: cot.cliente,
+        producto: `${cot.cantidad}x ${cot.producto}`,
+        cantidad: cot.cantidad,
+        total: cot.totalEst,
+        courier: 'Blue Express',
+        destino: `${cot.comuna}, ${cot.region}`,
+        estado: 'En Preparacion'
+      };
+
+      this.http.post<Pedido>(this.apiPedidosUrl, payload).subscribe({
+        next: (creado) => {
+          this.ngZone.run(() => {
+            this.pedidos.unshift(this.normalizarPedido(creado));
+            if (prod && !descuentaEnServidor) {
+              prod.stock = Math.max(0, prod.stock - cot.cantidad);
+            }
+            // La cotización ya fue convertida: sale de la bandeja
+            this.cotizaciones = this.cotizaciones.filter(c => c.id !== cot.id);
+            this.guardarCacheCotizaciones();
+            this.guardarCacheLocal();
+            this.notificacionReciente = `Guía ${payload.tracking} generada para bodega a partir de la cotización.`;
+            liberar();
+          });
+        },
+        error: (e) => {
+          console.error('POST pedido desde cotización falló:', e);
+          this.ngZone.run(() => {
+            this.notificacionReciente = 'No se pudo generar la guía en el servidor';
+            if (prod && descuentaEnServidor) {
+              // Se devuelve el stock que ya se había descontado
+              prod.stock = stockAnterior;
+              this.http.patch(`${this.apiProductosUrl}/${prod.id}/stock`, { stock: stockAnterior }).subscribe({ error: () => this.obtenerProductos() });
+            }
+            liberar();
+          });
+        }
+      });
+    };
+
+    if (prod && descuentaEnServidor) {
+      // El servidor revisa y descuenta el stock de una sola vez; si no alcanza responde 409
+      this.http.post<any>(`${this.apiProductosUrl}/${prod.id}/descontar`, { cantidad: cot.cantidad }).subscribe({
+        next: (actualizado) => {
+          this.ngZone.run(() => {
+            prod.stock = Number(actualizado.stockActual ?? actualizado.stock ?? prod.stock - cot.cantidad);
+            crearPedido();
+          });
+        },
+        error: (e: HttpErrorResponse) => {
+          this.ngZone.run(() => {
+            if (e.status === 409) {
+              alert(e.error?.mensaje ?? 'Stock insuficiente para generar la guía.');
+            } else {
+              console.error('POST descontar stock falló:', e);
+              this.notificacionReciente = 'No se pudo reservar el stock en el servidor';
+            }
+            this.obtenerProductos();
+            liberar();
+          });
+        }
+      });
+    } else {
+      crearPedido();
+    }
+  }
+
   cargarCacheCotizaciones(): void {
     const cache = localStorage.getItem('cotizaciones_app_data');
     if (cache) this.cotizaciones = JSON.parse(cache);

@@ -32,6 +32,9 @@ public class Producto {
     @Column(nullable = false)
     private Integer stockMinimo;
 
+    @Column(length = 500)
+    private String imagen;
+
     public Producto() {}
 
     public Producto(Long id, String sku, String nombre, String descripcion, String categoria, BigDecimal precio, Integer stockActual, Integer stockMinimo) {
@@ -63,6 +66,8 @@ public class Producto {
     public void setPrecio(BigDecimal precio) { this.precio = precio; }
     public Integer getStockActual() { return stockActual; }
     public void setStockActual(Integer stockActual) { this.stockActual = stockActual; }
+    public String getImagen() { return imagen; }
+    public void setImagen(String imagen) { this.imagen = imagen; }
     public Integer getStockMinimo() { return stockMinimo; }
     public void setStockMinimo(Integer stockMinimo) { this.stockMinimo = stockMinimo; }
 }

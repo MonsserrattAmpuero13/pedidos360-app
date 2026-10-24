@@ -27,6 +27,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Preflight de CORS
+                .requestMatchers(HttpMethod.GET, "/api/productos").permitAll() // Catalogo publico (solo lectura)
                 .requestMatchers("/api/**").authenticated()             // Exige JWT valido
                 .anyRequest().authenticated()
             )

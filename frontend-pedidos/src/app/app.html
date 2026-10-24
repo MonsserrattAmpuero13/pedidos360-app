@@ -143,10 +143,9 @@
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2rem;">
         <div *ngFor="let prod of productos" style="background: white; border-radius: 16px; border: 1px solid #E3DBD5; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
           <div>
-            <div style="height: 140px; background: #f1f5f9; border-radius: 8px; overflow: hidden; margin-bottom: 12px; position: relative;">
-            <div [style.background-color]="iconoDe(prod).fondo" style="width: 100%; height: 180px; display: flex; align-items: center; justify-content: center; font-size: 4.5rem; border-bottom: 1px solid #E3DBD5;">
-  {{ iconoDe(prod).emoji }}
-</div>
+            <div style="height: 180px; background: #f1f5f9; border-radius: 8px; overflow: hidden; margin-bottom: 12px; position: relative;">
+              <img *ngIf="prod.imagen" [src]="prod.imagen" [alt]="prod.nombre" (error)="prod.imagen = ''" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+              <div *ngIf="!prod.imagen" [style.background-color]="iconoDe(prod).fondo" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 4.5rem;">{{ iconoDe(prod).emoji }}</div>
             </div>
             <span style="font-size: 0.75rem; font-weight: 700; color: #2D6A4F; background: #EAE3DC; padding: 3px 8px; border-radius: 6px;">SKU: {{ prod.sku }}</span>
             <h3 style="font-family: 'Playfair Display', serif; color: #1B2A4A; font-size: 1.2rem; margin: 0.8rem 0 0.4rem 0;">{{ prod.nombre }}</h3>
@@ -574,7 +573,7 @@
             </thead>
             <tbody>
               <tr *ngFor="let prod of productos" style="border-bottom: 1px solid #f1f5f9;">
-                <td style="padding: 10px 14px; font-weight: 700; color: #0f172a;">{{ prod.sku }}</td>
+                <td style="padding: 10px 14px; font-weight: 700; color: #0f172a;"><div style="display: flex; align-items: center; gap: 8px;"><img *ngIf="prod.imagen" [src]="prod.imagen" [alt]="prod.nombre" (error)="prod.imagen = ''" style="width: 36px; height: 36px; border-radius: 6px; object-fit: cover;" /><span>{{ prod.sku }}</span></div></td>
                 <td style="padding: 10px 14px;">{{ prod.nombre }}</td>
                 <td style="padding: 10px 14px;">${{ prod.precio | number }}</td>
                 <td style="padding: 10px 14px;"><strong>{{ prod.stock }}</strong> un.</td>
@@ -642,7 +641,8 @@
                       <option value="ACEPTADA">Aceptada por Cliente</option>
                       <option value="RECHAZADA">Rechazada</option>
                     </select>
-                    <button *ngIf="cot.estado === 'ACEPTADA'" (click)="convertirCotizacionEnPedido(cot)" style="background: #16a34a; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                    <span *ngIf="cot.estado === 'ACEPTADA' && stockInsuficiente(cot)" style="font-size: 11px; font-weight: 700; color: #b91c1c;">Stock insuficiente (disp.: {{ productoDeCotizacion(cot)?.stock }})</span>
+                    <button *ngIf="cot.estado === 'ACEPTADA'" [disabled]="generandoGuia.has(cot.id)" (click)="convertirCotizacionEnPedido(cot)" style="background: #16a34a; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
                       Generar Guia
                     </button>
                   </div>
