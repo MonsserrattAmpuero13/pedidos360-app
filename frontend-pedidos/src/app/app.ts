@@ -858,7 +858,7 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
     }
 
     this.generandoGuia.add(cot.id);
-    const descuentaEnServidor = !!prod && !!prod.id && this.catalogoDesdeServidor;
+    let descuentaEnServidor = !!prod && !!prod.id && this.catalogoDesdeServidor;
     const stockAnterior = prod ? prod.stock : 0;
 
     const liberar = () => {
@@ -921,12 +921,14 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
           this.ngZone.run(() => {
             if (e.status === 409) {
               alert(e.error?.mensaje ?? 'Stock insuficiente para generar la guía.');
-            } else {
-              console.error('POST descontar stock falló:', e);
-              this.notificacionReciente = 'No se pudo reservar el stock en el servidor';
+              this.obtenerProductos();
+              liberar();
+              return;
             }
-            this.obtenerProductos();
-            liberar();
+            // El servidor aún no tiene esta función (backend sin actualizar): se descuenta solo en pantalla
+            console.warn('POST descontar stock no disponible, se descuenta en pantalla:', e);
+            descuentaEnServidor = false;
+            crearPedido();
           });
         }
       });
