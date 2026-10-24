@@ -55,7 +55,7 @@ public class DataInitializer implements CommandLineRunner {
         p.setCategoria(categoria);
         p.setPrecio(new BigDecimal(precio));
         p.setStockMinimo(stockMinimo);
-        p.setImagen("productos/" + sku + ".svg");
+        p.setImagen("productos/" + sku + ".jpg");
         productoRepository.save(p);
     }
 }
