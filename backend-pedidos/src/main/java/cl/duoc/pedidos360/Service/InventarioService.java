@@ -1,5 +1,7 @@
 package cl.duoc.pedidos360.Service;
 
+import cl.duoc.pedidos360.messaging.kafka.AlertaStockEvent;
+import cl.duoc.pedidos360.messaging.kafka.KafkaEventPublisher;
 import cl.duoc.pedidos360.model.Producto;
 import cl.duoc.pedidos360.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,9 @@ public class InventarioService {
 
     @Autowired
     private ProductoRepository productoRepository;
+
+    @Autowired
+    private KafkaEventPublisher kafkaPublisher;
 
     public List<Producto> listarTodos() {
         return productoRepository.findAll();
@@ -60,7 +65,9 @@ public class InventarioService {
         }
         Producto producto = buscarPorId(id);
         producto.setStockActual(nuevoStock);
-        return productoRepository.save(producto);
+        Producto guardado = productoRepository.save(producto);
+        avisarSiBajoMinimo(guardado);
+        return guardado;
     }
 
     /** Descuenta stock de forma atomica; si no alcanza, lanza IllegalStateException (la API responde 409). */
@@ -75,6 +82,16 @@ public class InventarioService {
                     + ". Disponible: " + producto.getStockActual() + ", solicitado: " + cantidad);
         }
         producto.setStockActual(producto.getStockActual() - cantidad);
-        return productoRepository.save(producto);
+        Producto guardado = productoRepository.save(producto);
+        avisarSiBajoMinimo(guardado);
+        return guardado;
+    }
+
+    /** Publica en Kafka (topico alertas-stock) cuando el producto queda en o bajo su stock minimo. */
+    private void avisarSiBajoMinimo(Producto p) {
+        if (p.getStockActual() != null && p.getStockMinimo() != null && p.getStockActual() <= p.getStockMinimo()) {
+            kafkaPublisher.alertaStock(new AlertaStockEvent(
+                    p.getId(), p.getSku(), p.getNombre(), p.getStockActual(), p.getStockMinimo()));
+        }
     }
 }

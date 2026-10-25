@@ -1,6 +1,7 @@
 package cl.duoc.pedidos360.controller;
 import cl.duoc.pedidos360.messaging.PedidoEvent;
 import cl.duoc.pedidos360.messaging.PedidoEventPublisher;
+import cl.duoc.pedidos360.messaging.kafka.KafkaEventPublisher;
 import cl.duoc.pedidos360.model.Pedido;
 import cl.duoc.pedidos360.Service.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class PedidoController {
     @Autowired
     private PedidoEventPublisher publisher;
 
+    @Autowired
+    private KafkaEventPublisher kafkaPublisher;
+
     @GetMapping
     public ResponseEntity<List<Pedido>> listarTodos() {
         return ResponseEntity.ok(pedidoService.listarTodos());
@@ -30,12 +34,14 @@ public class PedidoController {
     @PostMapping
     public ResponseEntity<Pedido> guardar(@RequestBody Pedido pedido) {
         Pedido guardado = pedidoService.guardarOActualizar(pedido);
-        publisher.pedidoCreado(new PedidoEvent(
+        PedidoEvent evento = new PedidoEvent(
                 guardado.getId(),
                 guardado.getTracking(),
                 guardado.getCliente(),
                 guardado.getDestino(),
-                guardado.getTotal()));
+                guardado.getTotal());
+        publisher.pedidoCreado(evento);        // Azure Service Bus
+        kafkaPublisher.pedidoCreado(evento);   // Apache Kafka
         return ResponseEntity.status(HttpStatus.CREATED).body(guardado);
     }
 
