@@ -1,6 +1,6 @@
 # Pedidos 360
 
-Sistema de control de órdenes y envíos con mensajería asíncrona sobre Azure Service Bus.
+Sistema de control de órdenes y envíos con mensajería asíncrona sobre Azure Service Bus y Apache Kafka (ambos conviven; Kafka se agregó sin reemplazar a Service Bus).
 
 ## Componentes
 
@@ -10,6 +10,7 @@ Sistema de control de órdenes y envíos con mensajería asíncrona sobre Azure 
 | `backend-pedidos` | Spring Boot 4.1.1, Java 17, JPA | API REST de pedidos y **productor** de eventos |
 | [notificaciones-service](https://github.com/MonsserrattAmpuero13/notificaciones-service) | Spring Boot | **Consumidor** de eventos (ACK manual y DLQ) |
 | [servicebus-admin-service](https://github.com/MonsserrattAmpuero13/servicebus-admin-service) | Spring Boot | **Administrador** de temas, suscripciones y colas |
+| [kafka-admin-service](https://github.com/MonsserrattAmpuero13/kafka-admin-service) | Spring Boot | **Administrador** de Kafka: tópicos, retención y consumer groups (puerto 8083) |
 
 ## Arquitectura
 
@@ -27,6 +28,52 @@ Angular (Vercel) -> Azure API Management -> backend-pedidos (App Service) -> Azu
 ```
 
 Al crear un pedido, el backend lo guarda y publica un evento. Si el Service Bus falla, el pedido se guarda igual (mensajería desacoplada).
+
+## Apache Kafka (EP5)
+
+Cada pedido creado se publica además en Kafka, junto al evento de Service Bus. Los cambios de stock bajo el mínimo generan una alerta.
+
+```
+backend-pedidos --(pedidos-creados, clave = tracking)--> Kafka (3 brokers) --> notificaciones-group
+backend-pedidos --(alertas-stock, clave = sku)---------> Kafka (3 brokers) --> alertas-stock-group
+```
+
+| Tópico | Particiones | Réplicas | Clave | Consumer group |
+|---|---|---|---|---|
+| `pedidos-creados` | 3 | 3 | tracking | `notificaciones-group` |
+| `alertas-stock` | 3 | 3 | sku | `alertas-stock-group` |
+
+- Productor con `acks=all` e idempotencia; consumidores con confirmación manual y reintentos.
+- Si Kafka no responde, el pedido se guarda igual.
+- Retención por defecto: 7 días, política `delete`, `min.insync.replicas=2`.
+
+### Levantar el clúster (3 Zookeeper + 3 brokers + Kafka UI)
+
+```
+cd kafka
+docker compose -f docker-compose.kafka.yml up -d
+docker compose -f docker-compose.kafka-ui.yml up -d
+```
+
+Kafka UI queda en http://localhost:8090.
+
+### Activar Kafka en el backend
+
+Está desactivado por defecto para no afectar el despliegue en Azure.
+
+| Variable | Valor |
+|---|---|
+| `KAFKA_ENABLED` | `true` |
+| `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092,localhost:9093,localhost:9094` (por defecto) |
+
+### RabbitMQ (broker adicional)
+
+```
+cd kafka
+docker compose -f docker-compose.rabbitmq.yml up -d
+```
+
+Consola de administración en http://localhost:15672 (usuario `pedidos360`, clave `pedidos360-dev`; configurables con `RABBITMQ_USER` y `RABBITMQ_PASS`).
 
 ## Seguridad (JWT)
 
