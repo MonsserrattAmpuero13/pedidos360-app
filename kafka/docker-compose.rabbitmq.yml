@@ -1,0 +1,30 @@
+# RabbitMQ con consola de administracion (plugin management incluido en la imagen)
+# Levantar:  docker compose -f docker-compose.rabbitmq.yml up -d
+# Consola:   http://localhost:15672   (usuario y clave: ver variables abajo)
+# Apagar:    docker compose -f docker-compose.rabbitmq.yml down
+#
+# Pedidos360 usa Azure Service Bus y Kafka como mensajeria principal.
+# RabbitMQ se incluye como broker adicional de la evaluacion, sin reemplazar a los anteriores.
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"     # protocolo AMQP (aplicaciones)
+      - "15672:15672"   # consola web de administracion
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-pedidos360}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-pedidos360-dev}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  rabbitmq-data:
