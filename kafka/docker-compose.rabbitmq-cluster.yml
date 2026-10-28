@@ -1,0 +1,70 @@
+# Clúster RabbitMQ de 2 nodos + configuración automática de exchanges, colas y DLQ
+# Levantar:  docker compose -f docker-compose.rabbitmq-cluster.yml up -d
+# Consola nodo 1: http://localhost:15672   nodo 2: http://localhost:15673
+# Usuario/clave: variables RABBITMQ_USER / RABBITMQ_PASS (por defecto pedidos360 / pedidos360-dev)
+# Apagar:    docker compose -f docker-compose.rabbitmq-cluster.yml down
+#
+# Pedidos360 sigue usando Azure Service Bus y Kafka; RabbitMQ se agrega sin reemplazarlos.
+
+x-rabbit: &rabbit
+  image: rabbitmq:3.13-management
+  environment: &rabbit-env
+    RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_COOKIE:-pedidos360-cookie}
+    RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-pedidos360}
+    RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-pedidos360-dev}
+  healthcheck:
+    test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+    interval: 15s
+    timeout: 10s
+    retries: 8
+  restart: unless-stopped
+
+services:
+  rabbit1:
+    <<: *rabbit
+    container_name: rabbit1
+    hostname: rabbit1
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbit1-data:/var/lib/rabbitmq
+
+  rabbit2:
+    <<: *rabbit
+    container_name: rabbit2
+    hostname: rabbit2
+    depends_on:
+      rabbit1:
+        condition: service_healthy
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    volumes:
+      - rabbit2-data:/var/lib/rabbitmq
+    # Se une al clúster del nodo 1 al iniciar
+    entrypoint: >
+      bash -c "
+      rabbitmq-server -detached &&
+      rabbitmqctl wait --timeout 60 /var/lib/rabbitmq/mnesia/rabbit@rabbit2.pid &&
+      rabbitmqctl stop_app && rabbitmqctl reset &&
+      rabbitmqctl join_cluster rabbit@rabbit1 && rabbitmqctl start_app &&
+      tail -f /dev/null"
+
+  rabbit-setup:
+    image: curlimages/curl:8.8.0
+    container_name: rabbit-setup
+    depends_on:
+      rabbit2:
+        condition: service_started
+    environment:
+      RABBITMQ_USER: ${RABBITMQ_USER:-pedidos360}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-pedidos360-dev}
+    volumes:
+      - ./rabbitmq/setup.sh:/setup.sh:ro
+    entrypoint: ["sh", "/setup.sh"]
+    restart: "no"
+
+volumes:
+  rabbit1-data:
+  rabbit2-data:
