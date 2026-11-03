@@ -1,6 +1,7 @@
 package cl.duoc.pedidos360.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "pedidos")
@@ -36,6 +37,37 @@ public class Pedido {
 
     @Column(length = 500)
     private String incidencia;
+
+    // --- Trazabilidad ---
+    private LocalDateTime fechaCreacion;
+
+    @Column(length = 150)
+    private String creadoPor;
+
+    /** Cotización de la que nació la guía (si corresponde) y quién la aceptó. */
+    private Long cotizacionOrigenId;
+
+    @Column(length = 150)
+    private String aceptadaPor;
+
+    private LocalDateTime fechaAceptacion;
+
+    /** Cuándo se entregó. */
+    private LocalDateTime fechaCierre;
+
+    /** Eliminación lógica: la orden sale de Control de Órdenes pero queda en el Archivo. */
+    private Boolean eliminado = false;
+
+    private LocalDateTime fechaEliminacion;
+
+    @Column(length = 150)
+    private String eliminadoPor;
+
+    @PrePersist
+    void alCrear() {
+        if (fechaCreacion == null) fechaCreacion = LocalDateTime.now();
+        if (eliminado == null) eliminado = false;
+    }
 
     public Pedido() {}
 
@@ -81,4 +113,31 @@ public class Pedido {
 
     public String getIncidencia() { return incidencia; }
     public void setIncidencia(String incidencia) { this.incidencia = incidencia; }
+
+    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
+    public void setFechaCreacion(LocalDateTime v) { this.fechaCreacion = v; }
+
+    public String getCreadoPor() { return creadoPor; }
+    public void setCreadoPor(String v) { this.creadoPor = v; }
+
+    public Long getCotizacionOrigenId() { return cotizacionOrigenId; }
+    public void setCotizacionOrigenId(Long v) { this.cotizacionOrigenId = v; }
+
+    public String getAceptadaPor() { return aceptadaPor; }
+    public void setAceptadaPor(String v) { this.aceptadaPor = v; }
+
+    public LocalDateTime getFechaAceptacion() { return fechaAceptacion; }
+    public void setFechaAceptacion(LocalDateTime v) { this.fechaAceptacion = v; }
+
+    public LocalDateTime getFechaCierre() { return fechaCierre; }
+    public void setFechaCierre(LocalDateTime v) { this.fechaCierre = v; }
+
+    public Boolean getEliminado() { return eliminado; }
+    public void setEliminado(Boolean v) { this.eliminado = v; }
+
+    public LocalDateTime getFechaEliminacion() { return fechaEliminacion; }
+    public void setFechaEliminacion(LocalDateTime v) { this.fechaEliminacion = v; }
+
+    public String getEliminadoPor() { return eliminadoPor; }
+    public void setEliminadoPor(String v) { this.eliminadoPor = v; }
 }

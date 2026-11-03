@@ -16,6 +16,16 @@ export interface Pedido {
   destino: string;
   estado: string;
   incidencia?: string;
+  // Trazabilidad (la entrega el servidor)
+  fechaCreacion?: string;
+  creadoPor?: string;
+  cotizacionOrigenId?: number;
+  aceptadaPor?: string;
+  fechaAceptacion?: string;
+  fechaCierre?: string;
+  eliminado?: boolean;
+  fechaEliminacion?: string;
+  eliminadoPor?: string;
 }
 
 export interface Producto {
@@ -33,13 +43,31 @@ export interface Producto {
 export interface Cotizacion {
   id: number;
   cliente: string;
+  email?: string;
   producto: string;
+  productoId?: number;
+  sku?: string;
   cantidad: number;
   region: string;
   comuna: string;
   totalEst: number;
+  estado: 'PENDIENTE' | 'CONTACTADO' | 'ACEPTADA' | 'RECHAZADA' | 'CONVERTIDA';
+  fechaCreacion?: string;
+  fechaAceptacion?: string;
+  aceptadaPor?: string;
+  fechaCierre?: string;
+  pedidoTracking?: string;
+  creadaPor?: string;
+}
+
+export interface EventoHistorial {
+  id: number;
+  tipo: string;
+  entidadId: number;
+  accion: string;
+  detalle?: string;
+  usuario?: string;
   fecha: string;
-  estado: 'PENDIENTE' | 'CONTACTADO' | 'ACEPTADA' | 'RECHAZADA';
 }
 
 @Component({
@@ -55,7 +83,7 @@ export class AppComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
 
-  moduloActivo: 'PEDIDOS' | 'PRODUCTOS' | 'COTIZACIONES' = 'PEDIDOS';
+  moduloActivo: 'PEDIDOS' | 'PRODUCTOS' | 'COTIZACIONES' | 'ARCHIVO' = 'PEDIDOS';
 
   // Control de vistas para la landing page pública (cambio instantáneo de vista)
   seccionPublica: 'inicio' | 'catalogo' = 'inicio';
@@ -72,6 +100,14 @@ export class AppComponent implements OnInit {
 
 private apiPedidosUrl = environment.apiUrl;
 private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos');
+private apiCotizacionesUrl = environment.apiUrl.replace(/\/pedidos$/, '/cotizaciones');
+
+  // Sesión activa y cabecera con el nombre de quien realiza cada acción (queda en el historial)
+  sesionActiva = false;
+  private opciones() {
+    const quien = this.sesionActiva ? this.userName : 'Portal público';
+    return { headers: { 'X-Usuario': encodeURIComponent(quien) } };
+  }
 
   // Estados completos del flujo logístico
   estadosDisponibles: string[] = [
@@ -125,7 +161,6 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
 
   ngOnInit(): void {
     this.cargarCacheLocal();
-    this.cargarCacheCotizaciones();
     this.obtenerPedidos();
     this.obtenerProductos();
 
@@ -136,8 +171,12 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
 
     this.auth.isAuthenticated$.subscribe(autenticado => {
       console.log('¿Estado de autenticación?:', autenticado);
+      this.sesionActiva = autenticado;
       // Al iniciar sesión se vuelve a pedir el catálogo, ahora con el token
-      if (autenticado) this.obtenerProductos();
+      if (autenticado) {
+        this.obtenerProductos();
+        this.cargarCotizaciones();
+      }
     });
 
     // Sincronización del perfil de Auth0 y detección de ROL
@@ -185,11 +224,13 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
     this.auth.logout({ logoutParams: { returnTo: window.location.origin } });
   }
 
-  cambiarModulo(modulo: 'PEDIDOS' | 'PRODUCTOS' | 'COTIZACIONES'): void {
+  cambiarModulo(modulo: 'PEDIDOS' | 'PRODUCTOS' | 'COTIZACIONES' | 'ARCHIVO'): void {
     this.ngZone.run(() => {
       this.moduloActivo = modulo;
       this.cdr.detectChanges();
     });
+    if (modulo === 'ARCHIVO') this.cargarArchivo();
+    if (modulo === 'COTIZACIONES') this.cargarCotizaciones();
   }
 
   cambiarSeccionPublica(seccion: 'inicio' | 'catalogo'): void {
@@ -222,7 +263,7 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
       editado.estado = 'Incidencia en Ruta';
     }
 
-    this.http.post<Pedido>(this.apiPedidosUrl, editado).subscribe({
+    this.http.post<Pedido>(this.apiPedidosUrl, editado, this.opciones()).subscribe({
       next: () => this.aplicarEdicionLocal(editado),
       error: () => this.aplicarEdicionLocal(editado)
     });
@@ -266,7 +307,7 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
     const nuevoEstado = motivo ? 'Incidencia en Ruta' : 'En Transito';
     const tracking = this.pedidoParaIncidencia.tracking;
 
-    this.http.patch<Pedido>(`${this.apiPedidosUrl}/${id}/incidencia`, { incidencia: motivo }).subscribe({
+    this.http.patch<Pedido>(`${this.apiPedidosUrl}/${id}/incidencia`, { incidencia: motivo }, this.opciones()).subscribe({
       next: () => {
         this.aplicarCambioIncidenciaLocal(id, motivo || undefined, nuevoEstado, tracking);
       },
@@ -536,7 +577,16 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
       courier: p.courier || 'Blue Express',
       destino: p.destino || 'Santiago Centro',
       estado: p.estado || 'En Preparacion',
-      incidencia: p.incidencia || ''
+      incidencia: p.incidencia || '',
+      fechaCreacion: p.fechaCreacion || undefined,
+      creadoPor: p.creadoPor || undefined,
+      cotizacionOrigenId: p.cotizacionOrigenId ?? undefined,
+      aceptadaPor: p.aceptadaPor || undefined,
+      fechaAceptacion: p.fechaAceptacion || undefined,
+      fechaCierre: p.fechaCierre || undefined,
+      eliminado: !!p.eliminado,
+      fechaEliminacion: p.fechaEliminacion || undefined,
+      eliminadoPor: p.eliminadoPor || undefined
     };
   }
 
@@ -646,7 +696,7 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
       estado: 'En Preparacion'
     };
 
-    this.http.post<Pedido>(this.apiPedidosUrl, payload).subscribe({
+    this.http.post<Pedido>(this.apiPedidosUrl, payload, this.opciones()).subscribe({
       next: (creado) => {
         this.ngZone.run(() => {
           this.pedidos.unshift(this.normalizarPedido(creado));
@@ -681,19 +731,42 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
   }
 
   cambiarEstado(pedido: Pedido, nuevoEstado: string): void {
+    const anterior = pedido.estado;
     this.ngZone.run(() => {
       pedido.estado = nuevoEstado;
       this.cdr.detectChanges();
     });
-    this.http.patch(`${this.apiPedidosUrl}/${pedido.id}/estado`, { estado: nuevoEstado }).subscribe();
+    this.http.patch<Pedido>(`${this.apiPedidosUrl}/${pedido.id}/estado`, { estado: nuevoEstado }, this.opciones()).subscribe({
+      next: () => {
+        if (nuevoEstado === 'Entregado') {
+          // Las órdenes entregadas salen de Control de Órdenes y quedan en el Archivo
+          this.ngZone.run(() => {
+            this.pedidos = this.pedidos.filter(p => p.id !== pedido.id);
+            this.guardarCacheLocal();
+            this.notificacionReciente = `Guía ${pedido.tracking} entregada: pasó al Archivo.`;
+            this.cdr.detectChanges();
+          });
+        }
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          pedido.estado = anterior;
+          this.notificacionReciente = 'No se pudo cambiar el estado en el servidor';
+          this.cdr.detectChanges();
+        });
+      }
+    });
   }
 
   eliminarPedido(id: number | undefined, tracking: string): void {
     if (!id || this.rolSeleccionado !== 'ADMIN') return;
-    if (confirm(`Confirma ejercicio del Derecho de Supresión ARCO para la guía ${tracking}`)) {
-      this.http.delete(`${this.apiPedidosUrl}/${id}`).subscribe({
+    if (confirm(`¿Eliminar la guía ${tracking} de Control de Órdenes?\n\nQuedará guardada en el Archivo, marcada como eliminada, con tu nombre y la fecha.`)) {
+      this.http.delete(`${this.apiPedidosUrl}/${id}`, this.opciones()).subscribe({
         next: () => this.removerLocal(id, tracking),
-        error: () => this.removerLocal(id, tracking)
+        error: () => this.ngZone.run(() => {
+          this.notificacionReciente = `No se pudo eliminar la guía ${tracking} en el servidor`;
+          this.cdr.detectChanges();
+        })
       });
     }
   }
@@ -701,7 +774,7 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
   private removerLocal(id: number, tracking: string): void {
     this.ngZone.run(() => {
       this.pedidos = this.pedidos.filter(p => p.id !== id);
-      this.notificacionReciente = `Registro suprimido (ARCO): ${tracking}`;
+      this.notificacionReciente = `Guía ${tracking} eliminada de Control de Órdenes (queda en el Archivo).`;
       this.guardarCacheLocal();
       this.cdr.detectChanges();
     });
@@ -790,60 +863,135 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
     });
   }
 
+  // Las cotizaciones se guardan en el servidor: con fecha, historial y archivo
   enviarSolicitudCotizacion(): void {
     if (!this.nuevaCotizacion.cliente.trim() || !this.nuevaCotizacion.region || !this.nuevaCotizacion.comuna || !this.productoSeleccionadoParaCotizar) {
-      alert('Por favor complete todos los campos obligatorios para la cotizacion.');
+      alert('Por favor complete todos los campos obligatorios para la cotización.');
+      return;
+    }
+    const cantidad = Number(this.nuevaCotizacion.cantidad);
+    if (!cantidad || cantidad < 1) {
+      alert('La cantidad debe ser al menos 1.');
       return;
     }
 
-    const subtotal = this.productoSeleccionadoParaCotizar.precio * this.nuevaCotizacion.cantidad;
-    const nuevaCot: Cotizacion = {
-      id: Date.now(),
+    const prod = this.productoSeleccionadoParaCotizar;
+    const solicitud = {
       cliente: this.nuevaCotizacion.cliente.trim(),
-      producto: this.productoSeleccionadoParaCotizar.nombre,
-      cantidad: Number(this.nuevaCotizacion.cantidad),
+      email: (this.nuevaCotizacion.email || '').trim(),
+      producto: prod.nombre,
+      productoId: prod.id,
+      sku: prod.sku,
+      cantidad,
       region: this.nuevaCotizacion.region,
       comuna: this.nuevaCotizacion.comuna,
-      totalEst: subtotal,
-      fecha: new Date().toLocaleDateString(),
-      estado: 'PENDIENTE'
+      totalEst: prod.precio * cantidad
     };
 
-    this.ngZone.run(() => {
-      this.cotizaciones.unshift(nuevaCot);
-      localStorage.setItem('cotizaciones_app_data', JSON.stringify(this.cotizaciones));
-      alert('Cotizacion enviada con exito. El equipo comercial la revisara en la torre de control.');
-      this.cerrarModalCotizar();
-      this.cdr.detectChanges();
+    this.http.post<Cotizacion>(this.apiCotizacionesUrl, solicitud, this.opciones()).subscribe({
+      next: (creada) => {
+        this.ngZone.run(() => {
+          if (this.sesionActiva) this.cotizaciones.unshift(creada);
+          alert('Cotización enviada con éxito. El equipo comercial la revisará en la torre de control.');
+          this.cerrarModalCotizar();
+          this.cdr.detectChanges();
+        });
+      },
+      error: (e: HttpErrorResponse) => {
+        this.ngZone.run(() => {
+          alert(e.status === 409
+            ? (e.error?.mensaje ?? 'Ya existe una cotización igual en revisión.')
+            : (e.error?.mensaje ?? 'No se pudo enviar la cotización. Intenta nuevamente en unos minutos.'));
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  cargarCotizaciones(): void {
+    this.http.get<Cotizacion[]>(this.apiCotizacionesUrl).subscribe({
+      next: (data) => {
+        this.ngZone.run(() => {
+          this.cotizaciones = data ?? [];
+          this.cdr.detectChanges();
+        });
+        this.importarCotizacionesDelNavegador();
+      },
+      error: (e) => console.warn('No se pudo cargar la bandeja de cotizaciones:', e)
+    });
+  }
+
+  // Las cotizaciones que antes vivían solo en este navegador se suben una vez al servidor
+  private importarCotizacionesDelNavegador(): void {
+    const clave = 'cotizaciones_app_data';
+    let locales: any[] = [];
+    try { locales = JSON.parse(localStorage.getItem(clave) ?? '[]'); } catch { locales = []; }
+    if (!Array.isArray(locales) || locales.length === 0) {
+      localStorage.removeItem(clave);
+      return;
+    }
+    const paquete = locales.map(c => ({
+      cliente: c.cliente, email: c.email, producto: c.producto, cantidad: c.cantidad,
+      region: c.region, comuna: c.comuna, totalEst: c.totalEst, estado: c.estado
+    }));
+    this.http.post<Cotizacion[]>(`${this.apiCotizacionesUrl}/importar`, paquete, this.opciones()).subscribe({
+      next: () => {
+        localStorage.removeItem(clave);
+        this.cargarCotizaciones();
+      },
+      error: (e) => console.warn('No se pudieron importar las cotizaciones locales:', e)
     });
   }
 
   cambiarEstadoCotizacion(cot: Cotizacion, nuevoEstado: 'PENDIENTE' | 'CONTACTADO' | 'ACEPTADA' | 'RECHAZADA'): void {
+    const anterior = cot.estado;
     this.ngZone.run(() => {
       cot.estado = nuevoEstado;
-      localStorage.setItem('cotizaciones_app_data', JSON.stringify(this.cotizaciones));
-      this.notificacionReciente = `Cotizacion de [${cot.cliente}] actualizada a: ${nuevoEstado}`;
       this.cdr.detectChanges();
     });
+    this.http.patch<Cotizacion>(`${this.apiCotizacionesUrl}/${cot.id}/estado`, { estado: nuevoEstado }, this.opciones()).subscribe({
+      next: (actualizada) => {
+        this.ngZone.run(() => {
+          Object.assign(cot, actualizada);
+          if (actualizada.estado === 'RECHAZADA') {
+            this.cotizaciones = this.cotizaciones.filter(c => c.id !== cot.id);
+            this.notificacionReciente = `Cotización de [${cot.cliente}] rechazada: pasó al Archivo.`;
+          } else {
+            this.notificacionReciente = `Cotización de [${cot.cliente}] actualizada a: ${nuevoEstado}`;
+          }
+          this.cdr.detectChanges();
+        });
+      },
+      error: (e: HttpErrorResponse) => {
+        this.ngZone.run(() => {
+          cot.estado = anterior;
+          alert(e.error?.mensaje ?? 'No se pudo actualizar la cotización en el servidor.');
+          this.cdr.detectChanges();
+        });
+      }
+    });
   }
+
   // Ids de cotizaciones cuya guía se está generando (evita el doble clic)
   generandoGuia = new Set<number>();
 
   productoDeCotizacion(cot: Cotizacion): Producto | undefined {
+    if (cot.productoId) {
+      const porId = this.productos.find(p => p.id === cot.productoId);
+      if (porId) return porId;
+    }
     const nombre = cot.producto.toLowerCase();
     return this.productos.find(p => p.nombre.toLowerCase() === nombre)
       ?? this.productos.find(p => p.nombre.toLowerCase().includes(nombre) || nombre.includes(p.nombre.toLowerCase()));
   }
 
+  // Aviso informativo en la bandeja; la revisión definitiva de stock la hace el servidor al generar la guía
   stockInsuficiente(cot: Cotizacion): boolean {
     const prod = this.productoDeCotizacion(cot);
     return !!prod && cot.cantidad > prod.stock;
   }
 
-  guardarCacheCotizaciones(): void {
-    localStorage.setItem('cotizaciones_app_data', JSON.stringify(this.cotizaciones));
-  }
-
+  // El servidor revisa el stock, lo descuenta, crea la guía y archiva la cotización en un solo paso
   convertirCotizacionEnPedido(cot: Cotizacion): void {
     if (cot.estado !== 'ACEPTADA') {
       alert('La cotización debe estar marcada como Aceptada por Cliente para generar la guía.');
@@ -851,94 +999,207 @@ private apiProductosUrl = environment.apiUrl.replace(/\/pedidos$/, '/productos')
     }
     if (this.generandoGuia.has(cot.id)) return;
 
-    const prod = this.productoDeCotizacion(cot);
-    if (prod && cot.cantidad > prod.stock) {
-      alert(`Alerta de stock insuficiente. Stock disponible: ${prod.stock} unidades. Se intentaron procesar ${cot.cantidad} unidades para "${prod.nombre}".`);
-      return;
-    }
-
     this.generandoGuia.add(cot.id);
-    let descuentaEnServidor = !!prod && !!prod.id && this.catalogoDesdeServidor;
-    const stockAnterior = prod ? prod.stock : 0;
-
     const liberar = () => {
       this.generandoGuia.delete(cot.id);
       this.cdr.detectChanges();
     };
 
-    const crearPedido = () => {
-      const payload: Pedido = {
-        tracking: `TRK-CL-${Math.floor(1000 + Math.random() * 9000)}`,
-        cliente: cot.cliente,
-        producto: `${cot.cantidad}x ${cot.producto}`,
-        cantidad: cot.cantidad,
-        total: cot.totalEst,
-        courier: 'Blue Express',
-        destino: `${cot.comuna}, ${cot.region}`,
-        estado: 'En Preparacion'
-      };
-
-      this.http.post<Pedido>(this.apiPedidosUrl, payload).subscribe({
-        next: (creado) => {
-          this.ngZone.run(() => {
-            this.pedidos.unshift(this.normalizarPedido(creado));
-            if (prod && !descuentaEnServidor) {
-              prod.stock = Math.max(0, prod.stock - cot.cantidad);
-            }
-            // La cotización ya fue convertida: sale de la bandeja
-            this.cotizaciones = this.cotizaciones.filter(c => c.id !== cot.id);
-            this.guardarCacheCotizaciones();
-            this.guardarCacheLocal();
-            this.notificacionReciente = `Guía ${payload.tracking} generada para bodega a partir de la cotización.`;
-            liberar();
-          });
-        },
-        error: (e) => {
-          console.error('POST pedido desde cotización falló:', e);
-          this.ngZone.run(() => {
+    this.http.post<Pedido>(`${this.apiCotizacionesUrl}/${cot.id}/generar-guia`, { courier: 'Blue Express' }, this.opciones()).subscribe({
+      next: (creado) => {
+        this.ngZone.run(() => {
+          this.pedidos.unshift(this.normalizarPedido(creado));
+          this.cotizaciones = this.cotizaciones.filter(c => c.id !== cot.id);
+          this.guardarCacheLocal();
+          this.obtenerProductos(); // trae el stock ya descontado
+          this.notificacionReciente = `Guía ${creado.tracking} generada: stock descontado y cotización archivada.`;
+          liberar();
+        });
+      },
+      error: (e: HttpErrorResponse) => {
+        this.ngZone.run(() => {
+          if (e.status === 409) {
+            alert(e.error?.mensaje ?? 'No se pudo generar la guía: revisa el stock de la cotización.');
+            this.obtenerProductos();
+            this.cargarCotizaciones();
+          } else {
+            console.error('Generar guía falló:', e);
             this.notificacionReciente = 'No se pudo generar la guía en el servidor';
-            if (prod && descuentaEnServidor) {
-              // Se devuelve el stock que ya se había descontado
-              prod.stock = stockAnterior;
-              this.http.patch(`${this.apiProductosUrl}/${prod.id}/stock`, { stock: stockAnterior }).subscribe({ error: () => this.obtenerProductos() });
-            }
-            liberar();
-          });
-        }
-      });
-    };
-
-    if (prod && descuentaEnServidor) {
-      // El servidor revisa y descuenta el stock de una sola vez; si no alcanza responde 409
-      this.http.post<any>(`${this.apiProductosUrl}/${prod.id}/descontar`, { cantidad: cot.cantidad }).subscribe({
-        next: (actualizado) => {
-          this.ngZone.run(() => {
-            prod.stock = Number(actualizado.stockActual ?? actualizado.stock ?? prod.stock - cot.cantidad);
-            crearPedido();
-          });
-        },
-        error: (e: HttpErrorResponse) => {
-          this.ngZone.run(() => {
-            if (e.status === 409) {
-              alert(e.error?.mensaje ?? 'Stock insuficiente para generar la guía.');
-              this.obtenerProductos();
-              liberar();
-              return;
-            }
-            // El servidor aún no tiene esta función (backend sin actualizar): se descuenta solo en pantalla
-            console.warn('POST descontar stock no disponible, se descuenta en pantalla:', e);
-            descuentaEnServidor = false;
-            crearPedido();
-          });
-        }
-      });
-    } else {
-      crearPedido();
-    }
+          }
+          liberar();
+        });
+      }
+    });
   }
 
-  cargarCacheCotizaciones(): void {
-    const cache = localStorage.getItem('cotizaciones_app_data');
-    if (cache) this.cotizaciones = JSON.parse(cache);
+  // =================== ARCHIVO ===================
+  archivoTab: 'COTIZACIONES' | 'ORDENES' = 'COTIZACIONES';
+  archivoCotizaciones: Cotizacion[] = [];
+  archivoPedidos: Pedido[] = [];
+  archivoCargando = false;
+  archivoError = '';
+  filtroArchivoTexto = '';
+  filtroArchivoEstado = 'TODOS';
+
+  detalle: {
+    tipo: 'COTIZACION' | 'PEDIDO';
+    cotizacion?: Cotizacion;
+    pedido?: Pedido;
+    historial: EventoHistorial[];
+    cargando: boolean;
+    desdeArchivo: boolean;
+  } | null = null;
+
+  private etiquetasAccion: Record<string, string> = {
+    CREADA: 'Creada',
+    IMPORTADA: 'Importada desde el navegador',
+    ACEPTADA: 'Aceptada por el administrador',
+    RECHAZADA: 'Rechazada',
+    ESTADO: 'Cambio de estado',
+    CONVERTIDA: 'Convertida en guía',
+    DEVUELTA: 'Devuelta a la bandeja',
+    EDITADA: 'Datos editados',
+    ENTREGADA: 'Entregada',
+    INCIDENCIA: 'Incidencia registrada',
+    INCIDENCIA_RESUELTA: 'Incidencia resuelta',
+    ELIMINADA: 'Eliminada de Control de Órdenes'
+  };
+
+  etiquetaAccion(accion: string): string {
+    return this.etiquetasAccion[accion] ?? accion;
+  }
+
+  etiquetaEstadoCotizacion(estado: string): string {
+    const nombres: Record<string, string> = {
+      PENDIENTE: 'Pendiente', CONTACTADO: 'Contactado', ACEPTADA: 'Aceptada',
+      RECHAZADA: 'Rechazada', CONVERTIDA: 'Convertida en guía'
+    };
+    return nombres[estado] ?? estado;
+  }
+
+  estadoArchivoPedido(p: Pedido): string {
+    return p.eliminado ? 'Eliminada' : p.estado;
+  }
+
+  seleccionarArchivoTab(tab: 'COTIZACIONES' | 'ORDENES'): void {
+    this.ngZone.run(() => {
+      this.archivoTab = tab;
+      this.filtroArchivoEstado = 'TODOS';
+      this.filtroArchivoTexto = '';
+      this.cdr.detectChanges();
+    });
+  }
+
+  cargarArchivo(): void {
+    this.archivoCargando = true;
+    this.archivoError = '';
+    let pendientes = 2;
+    const terminar = () => {
+      pendientes--;
+      if (pendientes === 0) {
+        this.ngZone.run(() => {
+          this.archivoCargando = false;
+          this.cdr.detectChanges();
+        });
+      }
+    };
+    const fallo = (e: HttpErrorResponse) => {
+      console.error('No se pudo cargar el archivo:', e);
+      this.ngZone.run(() => {
+        this.archivoError = 'No se pudo cargar el archivo desde el servidor. Intenta actualizar en unos minutos.';
+        this.cdr.detectChanges();
+      });
+      terminar();
+    };
+
+    this.http.get<Cotizacion[]>(`${this.apiCotizacionesUrl}/archivo`).subscribe({
+      next: (data) => { this.ngZone.run(() => { this.archivoCotizaciones = data ?? []; }); terminar(); },
+      error: fallo
+    });
+    this.http.get<Pedido[]>(`${this.apiPedidosUrl}/archivo`).subscribe({
+      next: (data) => { this.ngZone.run(() => { this.archivoPedidos = (data ?? []).map(p => this.normalizarPedido(p)); }); terminar(); },
+      error: fallo
+    });
+  }
+
+  private coincide(texto: string, ...campos: (string | number | undefined)[]): boolean {
+    const t = texto.trim().toLowerCase();
+    if (!t) return true;
+    return campos.some(c => c !== undefined && String(c).toLowerCase().includes(t));
+  }
+
+  get archivoCotizacionesFiltradas(): Cotizacion[] {
+    return this.archivoCotizaciones.filter(c =>
+      (this.filtroArchivoEstado === 'TODOS' || c.estado === this.filtroArchivoEstado) &&
+      this.coincide(this.filtroArchivoTexto, c.cliente, c.producto, c.pedidoTracking, c.comuna));
+  }
+
+  get archivoPedidosFiltrados(): Pedido[] {
+    return this.archivoPedidos.filter(p =>
+      (this.filtroArchivoEstado === 'TODOS' || this.estadoArchivoPedido(p) === this.filtroArchivoEstado) &&
+      this.coincide(this.filtroArchivoTexto, p.cliente, p.producto, p.tracking, p.destino));
+  }
+
+  private abrirDetalle(base: { tipo: 'COTIZACION' | 'PEDIDO'; cotizacion?: Cotizacion; pedido?: Pedido }, id: number | undefined, desdeArchivo: boolean): void {
+    this.ngZone.run(() => {
+      this.detalle = { ...base, historial: [], cargando: true, desdeArchivo };
+      this.cdr.detectChanges();
+    });
+    if (!id) {
+      this.ngZone.run(() => { if (this.detalle) this.detalle.cargando = false; this.cdr.detectChanges(); });
+      return;
+    }
+    const ruta = base.tipo === 'COTIZACION' ? this.apiCotizacionesUrl : this.apiPedidosUrl;
+    this.http.get<EventoHistorial[]>(`${ruta}/${id}/historial`).subscribe({
+      next: (eventos) => {
+        this.ngZone.run(() => {
+          if (this.detalle) { this.detalle.historial = eventos ?? []; this.detalle.cargando = false; }
+          this.cdr.detectChanges();
+        });
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          if (this.detalle) this.detalle.cargando = false;
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  verDetalleCotizacion(cot: Cotizacion, desdeArchivo = false): void {
+    this.abrirDetalle({ tipo: 'COTIZACION', cotizacion: cot }, cot.id, desdeArchivo);
+  }
+
+  verDetallePedido(p: Pedido, desdeArchivo = false): void {
+    this.abrirDetalle({ tipo: 'PEDIDO', pedido: p }, p.id, desdeArchivo);
+  }
+
+  cerrarDetalle(): void {
+    this.ngZone.run(() => {
+      this.detalle = null;
+      this.cdr.detectChanges();
+    });
+  }
+
+  devolverCotizacion(cot: Cotizacion): void {
+    if (cot.estado !== 'RECHAZADA') return;
+    if (!confirm(`¿Devolver la cotización de ${cot.cliente} a la bandeja? Volverá como Pendiente.`)) return;
+    this.http.post<Cotizacion>(`${this.apiCotizacionesUrl}/${cot.id}/devolver`, {}, this.opciones()).subscribe({
+      next: () => {
+        this.ngZone.run(() => {
+          this.archivoCotizaciones = this.archivoCotizaciones.filter(c => c.id !== cot.id);
+          this.detalle = null;
+          this.notificacionReciente = `Cotización de [${cot.cliente}] devuelta a la bandeja.`;
+          this.cdr.detectChanges();
+        });
+        this.cargarCotizaciones();
+      },
+      error: (e: HttpErrorResponse) => {
+        this.ngZone.run(() => {
+          alert(e.error?.mensaje ?? 'No se pudo devolver la cotización a la bandeja.');
+          this.cdr.detectChanges();
+        });
+      }
+    });
   }
 }

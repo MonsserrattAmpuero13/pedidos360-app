@@ -70,6 +70,34 @@ public class InventarioService {
         return guardado;
     }
 
+    /**
+     * Encuentra el producto de una cotización: por id, luego por SKU y, para cotizaciones antiguas, por nombre.
+     * Si no lo encuentra falla, en vez de dejar pasar la guía sin revisar el stock.
+     */
+    public Producto resolverProducto(Long id, String sku, String nombre) {
+        if (id != null) {
+            var porId = productoRepository.findById(id);
+            if (porId.isPresent()) return porId.get();
+        }
+        if (sku != null && !sku.isBlank()) {
+            var porSku = productoRepository.findBySku(sku.trim());
+            if (porSku.isPresent()) return porSku.get();
+        }
+        if (nombre != null && !nombre.isBlank()) {
+            String buscado = nombre.trim().toLowerCase();
+            List<Producto> todos = productoRepository.findAll();
+            for (Producto p : todos) {
+                if (p.getNombre() != null && p.getNombre().trim().equalsIgnoreCase(buscado)) return p;
+            }
+            for (Producto p : todos) {
+                String n = p.getNombre() == null ? "" : p.getNombre().toLowerCase();
+                if (!n.isEmpty() && (n.contains(buscado) || buscado.contains(n))) return p;
+            }
+        }
+        throw new IllegalStateException("No se encontró el producto «" + nombre
+                + "» en el catálogo, por lo que no se puede verificar el stock. Revisa el catálogo antes de generar la guía.");
+    }
+
     /** Descuenta stock de forma atomica; si no alcanza, lanza IllegalStateException (la API responde 409). */
     @Transactional
     public Producto descontarStock(Long id, Integer cantidad) {

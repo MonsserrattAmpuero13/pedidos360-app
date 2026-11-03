@@ -255,6 +255,13 @@
         style="display: flex; align-items: center; width: 100%; padding: 8px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
         Bandeja de Cotizaciones
       </button>
+
+      <button *ngIf="rolSeleccionado === 'ADMIN'" (click)="cambiarModulo('ARCHIVO')" 
+        [style.background]="moduloActivo === 'ARCHIVO' ? '#1e293b' : 'transparent'"
+        [style.color]="moduloActivo === 'ARCHIVO' ? '#ffffff' : '#94a3b8'"
+        style="display: flex; align-items: center; width: 100%; padding: 8px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
+        Archivo
+      </button>
     </nav>
 
     <div style="padding: 16px; border-top: 1px solid #1e293b; background: #0b0f19; box-sizing: border-box;">
@@ -477,6 +484,7 @@
             <thead>
               <tr style="background: #f8fafc; border-bottom: 1px solid #cbd5e1; color: #475569; font-weight: 700;">
                 <th style="padding: 10px 14px;">Tracking</th>
+                <th style="padding: 10px 14px;">Creación</th>
                 <th *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">Cliente</th>
                 <th *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">Destino</th>
                 <th style="padding: 10px 14px;">Producto Solicitado</th>
@@ -489,6 +497,10 @@
             <tbody>
               <tr *ngFor="let p of pedidosFiltrados" style="border-bottom: 1px solid #f1f5f9;">
                 <td style="padding: 10px 14px; font-weight: 700; color: #0f172a;">{{ p.tracking }}</td>
+                <td style="padding: 10px 14px; color: #475569; white-space: nowrap;">
+                  {{ p.fechaCreacion ? (p.fechaCreacion | date:'dd/MM/yyyy HH:mm') : 'Sin registro' }}
+                  <div *ngIf="p.aceptadaPor" style="margin-top: 2px; font-size: 10px; color: #16a34a; font-weight: 600; white-space: normal;">Cotización aceptada por {{ p.aceptadaPor }}</div>
+                </td>
                 <td *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">{{ p.cliente }}</td>
                 <td *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">{{ p.destino }}</td>
                 <td style="padding: 10px 14px;">{{ p.producto }}</td>
@@ -509,6 +521,7 @@
                         <option *ngFor="let est of estadosDisponibles" [value]="est">{{ est }}</option>
                       </select>
                       <button (click)="abrirModalIncidencia(p)" style="background: #d97706; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Incidencia</button>
+                      <button (click)="verDetallePedido(p)" style="background: #475569; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Historial</button>
                       <button (click)="abrirModalEditar(p)" style="background: #2563eb; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Editar</button>
                       <button (click)="eliminarPedido(p.id, p.tracking)" style="background: #dc2626; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Eliminar</button>
                     </div>
@@ -622,7 +635,7 @@
             </thead>
             <tbody>
               <tr *ngFor="let cot of cotizaciones" style="border-bottom: 1px solid #f1f5f9;">
-                <td style="padding: 10px 14px; color: #64748b;">{{ cot.fecha }}</td>
+                <td style="padding: 10px 14px; color: #64748b; white-space: nowrap;">{{ cot.fechaCreacion ? (cot.fechaCreacion | date:'dd/MM/yyyy HH:mm') : 'Sin registro' }}</td>
                 <td style="padding: 10px 14px; font-weight: 700; color: #0f172a;">{{ cot.cliente }}</td>
                 <td style="padding: 10px 14px;">{{ cot.producto }}</td>
                 <td style="padding: 10px 14px;"><strong>{{ cot.cantidad }}</strong> un.</td>
@@ -630,8 +643,9 @@
                 <td style="padding: 10px 14px; font-weight: 700; color: #16a34a;">${{ cot.totalEst | number }}</td>
                 <td style="padding: 10px 14px;">
                   <span style="padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; background: #e2e8f0; color: #334155;">
-                    {{ cot.estado }}
+                    {{ etiquetaEstadoCotizacion(cot.estado) }}
                   </span>
+                  <div *ngIf="cot.aceptadaPor && cot.estado === 'ACEPTADA'" style="margin-top: 3px; font-size: 10px; color: #16a34a; font-weight: 600;">Aceptada por {{ cot.aceptadaPor }}</div>
                 </td>
                 <td style="padding: 10px 14px; text-align: center;">
                   <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
@@ -642,6 +656,7 @@
                       <option value="RECHAZADA">Rechazada</option>
                     </select>
                     <span *ngIf="cot.estado === 'ACEPTADA' && stockInsuficiente(cot)" style="font-size: 11px; font-weight: 700; color: #b91c1c;">Stock insuficiente (disp.: {{ productoDeCotizacion(cot)?.stock }})</span>
+                    <button (click)="verDetalleCotizacion(cot)" style="background: #475569; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Historial</button>
                     <button *ngIf="cot.estado === 'ACEPTADA'" [disabled]="generandoGuia.has(cot.id)" (click)="convertirCotizacionEnPedido(cot)" style="background: #16a34a; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
                       Generar Guia
                     </button>
@@ -656,10 +671,158 @@
         </div>
       </div>
 
+      <!-- ================= MÓDULO 4: ARCHIVO ================= -->
+      <div *ngIf="moduloActivo === 'ARCHIVO' && rolSeleccionado === 'ADMIN'" class="arc">
+        <div class="arc-cabecera">
+          <div>
+            <h3>Archivo</h3>
+            <p>Registro permanente de cotizaciones y órdenes cerradas. Nada se borra: aquí queda el respaldo, con su historial.</p>
+          </div>
+          <button class="arc-boton" (click)="cargarArchivo()" [disabled]="archivoCargando">{{ archivoCargando ? 'Actualizando...' : 'Actualizar' }}</button>
+        </div>
+
+        <div class="arc-pestanas">
+          <button [class.activa]="archivoTab === 'COTIZACIONES'" (click)="seleccionarArchivoTab('COTIZACIONES')">Cotizaciones ({{ archivoCotizaciones.length }})</button>
+          <button [class.activa]="archivoTab === 'ORDENES'" (click)="seleccionarArchivoTab('ORDENES')">Órdenes ({{ archivoPedidos.length }})</button>
+        </div>
+
+        <div class="arc-filtros">
+          <input type="text" [(ngModel)]="filtroArchivoTexto" placeholder="Buscar por cliente, producto o guía" />
+          <select [(ngModel)]="filtroArchivoEstado" *ngIf="archivoTab === 'COTIZACIONES'">
+            <option value="TODOS">Todos los estados</option>
+            <option value="CONVERTIDA">Convertidas en guía</option>
+            <option value="RECHAZADA">Rechazadas</option>
+          </select>
+          <select [(ngModel)]="filtroArchivoEstado" *ngIf="archivoTab === 'ORDENES'">
+            <option value="TODOS">Todos los estados</option>
+            <option value="Entregado">Entregadas</option>
+            <option value="Eliminada">Eliminadas</option>
+          </select>
+        </div>
+
+        <div *ngIf="archivoError" class="arc-error">{{ archivoError }}</div>
+
+        <!-- Cotizaciones archivadas -->
+        <div class="arc-tabla" *ngIf="archivoTab === 'COTIZACIONES'">
+          <table>
+            <thead>
+              <tr>
+                <th>Creada</th><th>Cliente</th><th>Producto</th><th>Cant.</th><th>Destino</th><th>Total est.</th><th>Resultado</th><th>Cerrada</th><th>Guía</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of archivoCotizacionesFiltradas">
+                <td class="nowrap">{{ c.fechaCreacion ? (c.fechaCreacion | date:'dd/MM/yyyy HH:mm') : 'Sin registro' }}</td>
+                <td><strong>{{ c.cliente }}</strong></td>
+                <td>{{ c.producto }}</td>
+                <td>{{ c.cantidad }} un.</td>
+                <td>{{ c.comuna }}, {{ c.region }}</td>
+                <td class="nowrap">${{ c.totalEst | number }}</td>
+                <td><span class="arc-estado" [class.ok]="c.estado === 'CONVERTIDA'" [class.no]="c.estado === 'RECHAZADA'">{{ etiquetaEstadoCotizacion(c.estado) }}</span></td>
+                <td class="nowrap">{{ c.fechaCierre ? (c.fechaCierre | date:'dd/MM/yyyy HH:mm') : '-' }}</td>
+                <td>{{ c.pedidoTracking || '-' }}</td>
+                <td>
+                  <div class="arc-acciones">
+                    <button class="arc-boton" (click)="verDetalleCotizacion(c, true)">Ver detalle</button>
+                    <button class="arc-boton principal" *ngIf="c.estado === 'RECHAZADA'" (click)="devolverCotizacion(c)">Devolver a bandeja</button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="archivoCotizacionesFiltradas.length === 0">
+                <td colspan="10" class="arc-vacio">{{ archivoCotizaciones.length === 0 ? 'Aún no hay cotizaciones archivadas.' : 'Ninguna cotización coincide con el filtro.' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Órdenes archivadas -->
+        <div class="arc-tabla" *ngIf="archivoTab === 'ORDENES'">
+          <table>
+            <thead>
+              <tr>
+                <th>Creada</th><th>Guía</th><th>Cliente</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Estado final</th><th>Cerrada</th><th>Origen</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of archivoPedidosFiltrados">
+                <td class="nowrap">{{ p.fechaCreacion ? (p.fechaCreacion | date:'dd/MM/yyyy HH:mm') : 'Sin registro' }}</td>
+                <td><strong>{{ p.tracking }}</strong></td>
+                <td>{{ p.cliente }}</td>
+                <td>{{ p.producto }}</td>
+                <td>{{ p.cantidad }} un.</td>
+                <td class="nowrap">${{ p.total | number }}</td>
+                <td><span class="arc-estado" [class.ok]="p.estado === 'Entregado' && !p.eliminado" [class.no]="p.eliminado">{{ estadoArchivoPedido(p) }}</span></td>
+                <td class="nowrap">
+                  <ng-container *ngIf="p.eliminado">{{ p.fechaEliminacion ? (p.fechaEliminacion | date:'dd/MM/yyyy HH:mm') : '-' }}<div class="arc-sub">por {{ p.eliminadoPor || 'sin registro' }}</div></ng-container>
+                  <ng-container *ngIf="!p.eliminado">{{ p.fechaCierre ? (p.fechaCierre | date:'dd/MM/yyyy HH:mm') : '-' }}</ng-container>
+                </td>
+                <td>{{ p.aceptadaPor ? 'Cotización aceptada por ' + p.aceptadaPor : 'Orden directa' }}</td>
+                <td><div class="arc-acciones"><button class="arc-boton" (click)="verDetallePedido(p, true)">Ver detalle</button></div></td>
+              </tr>
+              <tr *ngIf="archivoPedidosFiltrados.length === 0">
+                <td colspan="10" class="arc-vacio">{{ archivoPedidos.length === 0 ? 'Aún no hay órdenes archivadas.' : 'Ninguna orden coincide con el filtro.' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </main>
 
   <!-- ================= MODALES DE CONTROL ================= -->
+
+  <!-- Detalle e historial (cotizaciones y órdenes) -->
+  <div *ngIf="detalle" class="det-fondo" (click)="cerrarDetalle()">
+    <div class="det-caja" (click)="$event.stopPropagation()">
+      <div class="det-titulo">
+        <h3 *ngIf="detalle.cotizacion">Cotización #{{ detalle.cotizacion.id }} · {{ detalle.cotizacion.cliente }}</h3>
+        <h3 *ngIf="detalle.pedido">Guía {{ detalle.pedido.tracking }} · {{ detalle.pedido.cliente }}</h3>
+        <button class="det-cerrar" (click)="cerrarDetalle()">Cerrar</button>
+      </div>
+
+      <div class="det-datos" *ngIf="detalle.cotizacion as c">
+        <div><span>Producto</span>{{ c.producto }}</div>
+        <div><span>Cantidad</span>{{ c.cantidad }} un.</div>
+        <div><span>Destino</span>{{ c.comuna }}, {{ c.region }}</div>
+        <div><span>Total estimado</span>${{ c.totalEst | number }}</div>
+        <div><span>Correo de contacto</span>{{ c.email || 'No informado' }}</div>
+        <div><span>Estado</span>{{ etiquetaEstadoCotizacion(c.estado) }}</div>
+        <div><span>Creada</span>{{ c.fechaCreacion ? (c.fechaCreacion | date:'dd/MM/yyyy HH:mm') : 'Sin registro' }}<small *ngIf="c.creadaPor"> · por {{ c.creadaPor }}</small></div>
+        <div *ngIf="c.aceptadaPor"><span>Aceptada</span>{{ c.fechaAceptacion | date:'dd/MM/yyyy HH:mm' }} · por {{ c.aceptadaPor }}</div>
+        <div *ngIf="c.fechaCierre"><span>Cerrada</span>{{ c.fechaCierre | date:'dd/MM/yyyy HH:mm' }}</div>
+        <div *ngIf="c.pedidoTracking"><span>Guía generada</span>{{ c.pedidoTracking }}</div>
+      </div>
+
+      <div class="det-datos" *ngIf="detalle.pedido as p">
+        <div><span>Producto</span>{{ p.producto }}</div>
+        <div><span>Cantidad</span>{{ p.cantidad }} un.</div>
+        <div><span>Destino</span>{{ p.destino }}</div>
+        <div><span>Total</span>${{ p.total | number }}</div>
+        <div><span>Courier</span>{{ p.courier }}</div>
+        <div><span>Estado</span>{{ estadoArchivoPedido(p) }}</div>
+        <div><span>Creada</span>{{ p.fechaCreacion ? (p.fechaCreacion | date:'dd/MM/yyyy HH:mm') : 'Sin registro' }}<small *ngIf="p.creadoPor"> · por {{ p.creadoPor }}</small></div>
+        <div *ngIf="p.aceptadaPor"><span>Cotización aceptada</span>{{ p.fechaAceptacion | date:'dd/MM/yyyy HH:mm' }} · por {{ p.aceptadaPor }}</div>
+        <div *ngIf="p.fechaCierre"><span>Entregada</span>{{ p.fechaCierre | date:'dd/MM/yyyy HH:mm' }}</div>
+        <div *ngIf="p.eliminado"><span>Eliminada</span>{{ p.fechaEliminacion | date:'dd/MM/yyyy HH:mm' }} · por {{ p.eliminadoPor || 'sin registro' }}</div>
+        <div *ngIf="p.incidencia"><span>Incidencia vigente</span>{{ p.incidencia }}</div>
+      </div>
+
+      <h4 class="det-sub">Historial</h4>
+      <div *ngIf="detalle.cargando" class="arc-vacio">Cargando historial...</div>
+      <ol class="det-linea" *ngIf="!detalle.cargando">
+        <li *ngFor="let e of detalle.historial">
+          <div class="det-linea-cab"><strong>{{ etiquetaAccion(e.accion) }}</strong><span>{{ e.fecha | date:'dd/MM/yyyy HH:mm' }} · {{ e.usuario || 'sistema' }}</span></div>
+          <div class="det-linea-det" *ngIf="e.detalle">{{ e.detalle }}</div>
+        </li>
+      </ol>
+      <p *ngIf="!detalle.cargando && detalle.historial.length === 0" class="arc-vacio">Este registro es anterior al historial: no tiene eventos guardados.</p>
+
+      <div class="det-pie" *ngIf="detalle.cotizacion && detalle.desdeArchivo && detalle.cotizacion.estado === 'RECHAZADA'">
+        <button class="arc-boton principal" (click)="devolverCotizacion(detalle.cotizacion)">Devolver a la bandeja</button>
+      </div>
+    </div>
+  </div>
   <!-- Modal Incidencias -->
   <div *ngIf="pedidoParaIncidencia" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000;">
     <div style="background: white; padding: 20px; border-radius: 6px; width: 420px; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">

@@ -17,7 +17,7 @@ public class ReporteService {
 
     public DashboardMetricasResponse obtenerMetricas() {
         DashboardMetricasResponse res = new DashboardMetricasResponse();
-        res.setTotalPedidos(pedidoRepository.count());
+        res.setTotalPedidos(pedidoRepository.countActivos());
         res.setPendientes(pedidoRepository.countByEstado("PENDIENTE"));
         res.setEnRuta(pedidoRepository.countByEstado("EN_RUTA"));
         res.setEntregados(pedidoRepository.countByEstado("ENTREGADO"));
