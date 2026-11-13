@@ -576,7 +576,7 @@ private apiCotizacionesUrl = environment.apiUrl.replace(/\/pedidos$/, '/cotizaci
       total: p.total || 0,
       courier: p.courier || 'Blue Express',
       destino: p.destino || 'Santiago Centro',
-      estado: p.estado || 'En Preparacion',
+      estado: this.normalizarEstado(p.estado),
       incidencia: p.incidencia || '',
       fechaCreacion: p.fechaCreacion || undefined,
       creadoPor: p.creadoPor || undefined,
@@ -808,6 +808,28 @@ private apiCotizacionesUrl = environment.apiUrl.replace(/\/pedidos$/, '/cotizaci
       this.notificacionReciente = '';
       this.cdr.detectChanges();
     });
+  }
+
+  // Unifica estados antiguos o escritos distinto (p. ej. datos de prueba) con los del flujo oficial
+  private normalizarEstado(estado?: string): string {
+    const clave = (estado || '').trim().toLowerCase().replace(/[\s_-]+/g, ' ');
+    const mapa: Record<string, string> = {
+      'pendiente': 'En Preparacion', 'en preparacion': 'En Preparacion', 'en preparación': 'En Preparacion',
+      'listo para despacho': 'Listo para Despacho',
+      'en ruta': 'En Transito', 'en transito': 'En Transito', 'en tránsito': 'En Transito',
+      'en reparto': 'En Reparto', 'entregado': 'Entregado',
+      'incidencia en ruta': 'Incidencia en Ruta', 'incidencia': 'Incidencia en Ruta'
+    };
+    return mapa[clave] || estado || 'En Preparacion';
+  }
+
+  etiquetaEstadoPedido(estado: string): string {
+    const etiquetas: Record<string, string> = {
+      'En Preparacion': 'En preparación', 'Listo para Despacho': 'Listo para despacho',
+      'En Transito': 'En tránsito', 'En Reparto': 'En reparto',
+      'Entregado': 'Entregado', 'Incidencia en Ruta': 'Incidencia en ruta'
+    };
+    return etiquetas[estado] || estado;
   }
 
   getCount(estado: string): number { return this.pedidos.filter(p => p.estado === estado).length; }
