@@ -705,3 +705,13 @@
 .selector { display: inline-flex; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; margin: 10px 0 0; }
 .selector button { background: #ffffff; border: none; padding: 5px 12px; font-size: 11px; font-weight: 600; color: #374151; cursor: pointer; }
 .selector button.activo { background: var(--acc-suave); color: var(--acc); }
+
+/* ===== Actualización y actividad ===== */
+.ind-barra { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 11px; color: var(--tx2); }
+.ind-barra button { background: #ffffff; border: 1px solid #d1d5db; border-radius: 6px; padding: 5px 12px; font-size: 11px; font-weight: 600; color: #374151; cursor: pointer; }
+.ind-barra button:hover { background: #f3f4f6; }
+.actividad { list-style: none; margin: 0; padding: 0; }
+.actividad li { display: flex; gap: 14px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 12px; }
+.actividad li:last-child { border-bottom: none; }
+.act-hora { color: var(--tx2); white-space: nowrap; min-width: 82px; font-variant-numeric: tabular-nums; }
+.act-texto small { color: var(--tx2); font-size: 12px; }

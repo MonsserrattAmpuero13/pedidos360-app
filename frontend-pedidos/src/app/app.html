@@ -274,6 +274,11 @@
       <!-- ================= MÓDULO: PANEL DE INDICADORES ================= -->
       <div *ngIf="moduloActivo === 'INDICADORES' && rolSeleccionado === 'ADMIN'" class="ind">
 
+        <div class="ind-barra">
+          <span>Actualizado a las {{ ultimaActualizacion || '—' }} · se renueva solo cada 20 segundos</span>
+          <button (click)="refrescarPanel()">Actualizar ahora</button>
+        </div>
+
         <div class="ind-titulo">Ventas · {{ nombreMes }}</div>
 
         <div class="ventas-grid">
@@ -377,6 +382,18 @@
               <span class="valor">{{ clp(c.monto) }}</span>
             </div>
             <p class="vacio-sobrio" *ngIf="topClientes.length === 0">Sin órdenes activas.</p>
+          </section>
+
+          <section class="tarjeta ancha">
+            <h4>Actividad reciente</h4>
+            <p class="tarjeta-nota">Últimos movimientos de órdenes y cotizaciones, con quién los realizó.</p>
+            <ul class="actividad" *ngIf="actividadReciente.length > 0">
+              <li *ngFor="let e of actividadReciente">
+                <span class="act-hora">{{ e.fecha | date:'dd/MM HH:mm' }}</span>
+                <span class="act-texto"><strong>{{ e.texto }}</strong><small *ngIf="e.detalle"> · {{ e.detalle }}</small></span>
+              </li>
+            </ul>
+            <p class="vacio-sobrio" *ngIf="actividadReciente.length === 0">Todavía no hay movimientos con fecha registrada.</p>
           </section>
         </div>
       </div>

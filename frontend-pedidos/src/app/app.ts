@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -77,7 +77,7 @@ export interface EventoHistorial {
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   public auth = inject(AuthService);
   private http = inject(HttpClient);
   private cdr = inject(ChangeDetectorRef);
@@ -228,6 +228,7 @@ private apiCotizacionesUrl = environment.apiUrl.replace(/\/pedidos$/, '/cotizaci
     this.ngZone.run(() => {
       this.moduloActivo = modulo;
       this.menuAbierto = false;
+      if (modulo === 'INDICADORES') { this.iniciarRefrescoPanel(); } else { this.detenerRefrescoPanel(); }
       this.cdr.detectChanges();
     });
     if (modulo === 'ARCHIVO' || modulo === 'INDICADORES') this.cargarArchivo();
@@ -549,7 +550,7 @@ private apiCotizacionesUrl = environment.apiUrl.replace(/\/pedidos$/, '/cotizaci
     this.http.get<Pedido[]>(this.apiPedidosUrl).subscribe({
       next: (data) => {
         this.ngZone.run(() => {
-          if (data && data.length > 0) {
+          if (Array.isArray(data)) {
             this.pedidos = data.map((item, idx) => this.normalizarPedido(item, idx));
             this.guardarCacheLocal();
           }
@@ -868,6 +869,54 @@ private apiCotizacionesUrl = environment.apiUrl.replace(/\/pedidos$/, '/cotizaci
       texto: ventas ? this.compacto(d.monto) : String(d.cantidad),
       pct: ((ventas ? d.monto : d.cantidad) / maximo) * 100
     }));
+  }
+
+  // ---------- Actualización automática del panel ----------
+  ultimaActualizacion = '';
+  private temporizadorPanel: ReturnType<typeof setInterval> | null = null;
+
+  refrescarPanel(): void {
+    this.obtenerPedidos();
+    this.obtenerProductos();
+    this.cargarArchivo();
+    this.cargarCotizaciones();
+    this.ultimaActualizacion = new Date().toLocaleTimeString('es-CL');
+  }
+
+  private iniciarRefrescoPanel(): void {
+    this.detenerRefrescoPanel();
+    this.refrescarPanel();
+    this.temporizadorPanel = setInterval(() => {
+      if (this.moduloActivo === 'INDICADORES' && !document.hidden) this.refrescarPanel();
+    }, 20000);
+  }
+
+  private detenerRefrescoPanel(): void {
+    if (this.temporizadorPanel) { clearInterval(this.temporizadorPanel); this.temporizadorPanel = null; }
+  }
+
+  ngOnDestroy(): void { this.detenerRefrescoPanel(); }
+
+  // Últimos movimientos, armados con las fechas y responsables que registra el sistema
+  get actividadReciente(): { fecha: number; texto: string; detalle: string }[] {
+    const eventos: { fecha: number; texto: string; detalle: string }[] = [];
+    const agregar = (fecha: string | undefined, texto: string, detalle: string) => {
+      if (!fecha) return;
+      const t = new Date(fecha).getTime();
+      if (!isNaN(t)) eventos.push({ fecha: t, texto, detalle });
+    };
+    for (const p of [...this.pedidos, ...this.archivoPedidos]) {
+      agregar(p.fechaCreacion, 'Orden ' + p.tracking + ' creada', p.cliente + (p.creadoPor ? ' · por ' + p.creadoPor : ''));
+      agregar(p.fechaAceptacion, 'Cotización aceptada para la orden ' + p.tracking, p.aceptadaPor ? 'por ' + p.aceptadaPor : '');
+      if (p.estado === 'Entregado' && !p.eliminado) agregar(p.fechaCierre, 'Orden ' + p.tracking + ' entregada', p.cliente);
+      if (p.eliminado) agregar(p.fechaEliminacion, 'Orden ' + p.tracking + ' eliminada', p.eliminadoPor ? 'por ' + p.eliminadoPor : '');
+    }
+    for (const c of [...this.cotizaciones, ...this.archivoCotizaciones]) {
+      agregar(c.fechaCreacion, 'Cotización #' + c.id + ' recibida', c.cliente);
+      if (c.estado === 'RECHAZADA') agregar(c.fechaCierre, 'Cotización #' + c.id + ' rechazada', c.cliente);
+      if (c.estado === 'CONVERTIDA') agregar(c.fechaCierre, 'Cotización #' + c.id + ' convertida en guía', c.pedidoTracking || '');
+    }
+    return eventos.sort((a, b) => b.fecha - a.fecha).slice(0, 10);
   }
 
   // ---------- Ventas y metas del mes ----------
