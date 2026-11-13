@@ -30,14 +30,19 @@ public class GuiaService {
         Cotizacion cot = cotizaciones.validarParaGuia(cotizacionId);
         Producto producto = inventario.resolverProducto(cot.getProductoId(), cot.getSku(), cot.getProducto());
 
+        // El tracking se define antes para dejar el descuento de stock vinculado a esta orden
+        String tracking = PedidoService.nuevoTracking();
+
         // Lanza IllegalStateException (409) si el stock no alcanza
-        Producto actualizado = inventario.descontarStock(producto.getId(), cot.getCantidad());
+        Producto actualizado = inventario.descontarStock(
+                producto.getId(), cot.getCantidad(), tracking, cot.getCliente(), usuario);
 
         double total = cot.getTotalEst() != null
                 ? cot.getTotalEst()
                 : actualizado.getPrecio().doubleValue() * cot.getCantidad();
 
         Pedido pedido = new Pedido();
+        pedido.setTracking(tracking);
         pedido.setCliente(cot.getCliente());
         pedido.setProducto(cot.getCantidad() + "x " + cot.getProducto());
         pedido.setCantidad(cot.getCantidad());

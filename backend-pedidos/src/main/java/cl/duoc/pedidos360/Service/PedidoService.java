@@ -44,11 +44,15 @@ public class PedidoService {
         return historial.listar(EventoHistorial.PEDIDO, id);
     }
 
+    public static String nuevoTracking() {
+        return "TRK-CL-" + (int) (1000 + Math.random() * 9000);
+    }
+
     @Transactional
     public Pedido guardarOActualizar(Pedido pedido, String usuario) {
         if (pedido.getId() == null) {
             if (pedido.getTracking() == null || pedido.getTracking().isBlank()) {
-                pedido.setTracking("TRK-CL-" + (int)(1000 + Math.random() * 9000));
+                pedido.setTracking(nuevoTracking());
             }
             if (pedido.getEstado() == null || pedido.getEstado().isBlank()) {
                 pedido.setEstado("En Preparacion");

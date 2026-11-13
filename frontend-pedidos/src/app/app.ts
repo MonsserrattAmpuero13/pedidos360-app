@@ -60,6 +60,18 @@ export interface Cotizacion {
   creadaPor?: string;
 }
 
+export interface MovimientoStock {
+  id: number;
+  tipo: string;
+  cantidad: number;
+  stockAntes: number;
+  stockDespues: number;
+  referencia?: string;
+  cliente?: string;
+  usuario?: string;
+  fecha: string;
+}
+
 export interface EventoHistorial {
   id: number;
   tipo: string;
@@ -500,13 +512,37 @@ private apiCotizacionesUrl = environment.apiUrl.replace(/\/pedidos$/, '/cotizaci
     });
   }
 
+  // Movimientos de stock de un producto (cada descuento queda ligado a su orden)
+  movimientosProducto: { producto: Producto; lista: MovimientoStock[]; cargando: boolean; error: boolean } | null = null;
+
+  verMovimientos(producto: Producto): void {
+    if (!producto.id) return;
+    this.movimientosProducto = { producto, lista: [], cargando: true, error: false };
+    this.http.get<MovimientoStock[]>(`${this.apiProductosUrl}/${producto.id}/movimientos`).subscribe({
+      next: (lista) => this.ngZone.run(() => {
+        if (this.movimientosProducto) { this.movimientosProducto.lista = lista ?? []; this.movimientosProducto.cargando = false; }
+        this.cdr.detectChanges();
+      }),
+      error: () => this.ngZone.run(() => {
+        if (this.movimientosProducto) { this.movimientosProducto.cargando = false; this.movimientosProducto.error = true; }
+        this.cdr.detectChanges();
+      })
+    });
+  }
+
+  cerrarMovimientos(): void { this.movimientosProducto = null; }
+
+  totalDescontado(): number {
+    return (this.movimientosProducto?.lista ?? []).filter(m => m.cantidad < 0).reduce((t, m) => t - m.cantidad, 0);
+  }
+
   ajustarStockRapido(producto: Producto, delta: number): void {
     if (this.rolSeleccionado !== 'ADMIN') return;
     const stockAnterior = producto.stock;
     const nuevoStock = Math.max(0, stockAnterior + delta);
     producto.stock = nuevoStock;
 
-    this.http.patch(`${this.apiProductosUrl}/${producto.id}/stock`, { stock: nuevoStock }).subscribe({
+    this.http.patch(`${this.apiProductosUrl}/${producto.id}/stock`, { stock: nuevoStock }, this.opciones()).subscribe({
       next: () => {
         this.notificacionReciente = `Stock de ${producto.nombre}: ${nuevoStock} unidades`;
         this.cdr.detectChanges();

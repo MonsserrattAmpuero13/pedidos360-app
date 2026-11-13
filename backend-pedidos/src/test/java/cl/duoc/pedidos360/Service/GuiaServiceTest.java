@@ -64,11 +64,11 @@ class GuiaServiceTest {
         Producto p = producto();
         when(cotizaciones.validarParaGuia(7L)).thenReturn(cot);
         when(inventario.resolverProducto(3L, null, "Arroz Grado 1 Saco 10kg")).thenReturn(p);
-        when(inventario.descontarStock(3L, 10)).thenReturn(p);
+        when(inventario.descontarStock(eq(3L), eq(10), any(), any(), any())).thenReturn(p);
 
         Pedido guia = service.generarDesdeCotizacion(7L, null, "admin");
 
-        verify(inventario).descontarStock(3L, 10);
+        verify(inventario).descontarStock(eq(3L), eq(10), any(), any(), any());
         assertEquals("Minimarket Don Juan", guia.getCliente());
         assertEquals("10x Arroz Grado 1 Saco 10kg", guia.getProducto());
         assertEquals("Maipú, Metropolitana", guia.getDestino());
@@ -83,7 +83,7 @@ class GuiaServiceTest {
         Producto p = producto();
         when(cotizaciones.validarParaGuia(7L)).thenReturn(cot);
         when(inventario.resolverProducto(any(), any(), any())).thenReturn(p);
-        when(inventario.descontarStock(3L, 10)).thenThrow(new IllegalStateException("Stock insuficiente"));
+        when(inventario.descontarStock(eq(3L), eq(10), any(), any(), any())).thenThrow(new IllegalStateException("Stock insuficiente"));
 
         assertThrows(IllegalStateException.class, () -> service.generarDesdeCotizacion(7L, null, "admin"));
         verify(pedidos, never()).guardarOActualizar(any(), any());
@@ -95,7 +95,7 @@ class GuiaServiceTest {
         when(inventario.resolverProducto(any(), any(), any())).thenThrow(new IllegalStateException("No se encontró el producto"));
 
         assertThrows(IllegalStateException.class, () -> service.generarDesdeCotizacion(7L, null, "admin"));
-        verify(inventario, never()).descontarStock(any(), any());
+        verify(inventario, never()).descontarStock(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -104,7 +104,7 @@ class GuiaServiceTest {
         Producto p = producto();
         when(cotizaciones.validarParaGuia(7L)).thenReturn(cot);
         when(inventario.resolverProducto(any(), any(), any())).thenReturn(p);
-        when(inventario.descontarStock(3L, 10)).thenReturn(p);
+        when(inventario.descontarStock(eq(3L), eq(10), any(), any(), any())).thenReturn(p);
 
         Pedido guia = service.generarDesdeCotizacion(7L, "Chilexpress", "admin");
 

@@ -633,6 +633,7 @@
                 <th style="padding: 10px 14px;">Stock Actual</th>
                 <th style="padding: 10px 14px;">Umbral Mínimo</th>
                 <th style="padding: 10px 14px;">Estado</th>
+                <th style="padding: 10px 14px;">Movimientos</th>
                 <th *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">Acciones</th>
               </tr>
             </thead>
@@ -648,6 +649,7 @@
                     {{ prod.stock <= prod.stockMinimo ? 'BAJO STOCK' : 'NORMAL' }}
                   </span>
                 </td>
+                <td style="padding: 10px 14px;"><button class="arc-boton" (click)="verMovimientos(prod)">Ver stock descontado</button></td>
                 <td *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">
                   <div style="display: flex; gap: 4px;">
                     <button (click)="ajustarStockRapido(prod, -1)" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 11px;">-1</button>
@@ -875,6 +877,40 @@
       </div>
     </div>
   </div>
+  <!-- Movimientos de stock por producto -->
+  <div *ngIf="movimientosProducto as mp" class="det-fondo" (click)="cerrarMovimientos()">
+    <div class="det-caja" (click)="$event.stopPropagation()">
+      <div class="det-titulo">
+        <h3>Stock descontado · {{ mp.producto.nombre }}</h3>
+        <button class="det-cerrar" (click)="cerrarMovimientos()">Cerrar</button>
+      </div>
+      <div class="det-datos">
+        <div><span>SKU</span>{{ mp.producto.sku }}</div>
+        <div><span>Stock actual</span>{{ mp.producto.stock }} un.</div>
+        <div><span>Total descontado por pedidos</span>{{ totalDescontado() }} un.</div>
+      </div>
+      <div *ngIf="mp.cargando" class="arc-vacio">Cargando movimientos...</div>
+      <div *ngIf="mp.error" class="arc-error">No se pudieron cargar los movimientos desde el servidor.</div>
+      <div class="arc-tabla" *ngIf="!mp.cargando && !mp.error && mp.lista.length > 0">
+        <table>
+          <thead><tr><th>Fecha</th><th>Pedido</th><th>Cliente</th><th>Pidió</th><th>Stock antes</th><th>Quedaron</th><th>Realizado por</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let m of mp.lista">
+              <td class="nowrap">{{ m.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="nowrap"><strong *ngIf="m.referencia">{{ m.referencia }}</strong><span *ngIf="!m.referencia" class="arc-sub">{{ m.tipo === 'AJUSTE' ? 'Ajuste manual' : 'Sin pedido' }}</span></td>
+              <td>{{ m.cliente || '—' }}</td>
+              <td class="nowrap"><strong [style.color]="m.cantidad < 0 ? '#b91c1c' : '#166534'">{{ m.cantidad < 0 ? '-' + (0 - m.cantidad) : '+' + m.cantidad }}</strong> un.</td>
+              <td class="nowrap">{{ m.stockAntes }}</td>
+              <td class="nowrap"><strong>{{ m.stockDespues }}</strong></td>
+              <td>{{ m.usuario || 'sistema' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p *ngIf="!mp.cargando && !mp.error && mp.lista.length === 0" class="arc-vacio">Este producto aún no tiene movimientos de stock registrados. Aparecerán desde la próxima guía generada.</p>
+    </div>
+  </div>
+
   <!-- Modal Incidencias -->
   <div *ngIf="pedidoParaIncidencia" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000;">
     <div style="background: white; padding: 20px; border-radius: 6px; width: 420px; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
