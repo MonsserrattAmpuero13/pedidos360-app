@@ -83,7 +83,7 @@ export class AppComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
 
-  moduloActivo: 'PEDIDOS' | 'PRODUCTOS' | 'COTIZACIONES' | 'ARCHIVO' = 'PEDIDOS';
+  moduloActivo: 'PEDIDOS' | 'PRODUCTOS' | 'COTIZACIONES' | 'ARCHIVO' | 'INDICADORES' = 'PEDIDOS';
 
   // Control de vistas para la landing page pública (cambio instantáneo de vista)
   seccionPublica: 'inicio' | 'catalogo' = 'inicio';
@@ -224,12 +224,13 @@ private apiCotizacionesUrl = environment.apiUrl.replace(/\/pedidos$/, '/cotizaci
     this.auth.logout({ logoutParams: { returnTo: window.location.origin } });
   }
 
-  cambiarModulo(modulo: 'PEDIDOS' | 'PRODUCTOS' | 'COTIZACIONES' | 'ARCHIVO'): void {
+  cambiarModulo(modulo: 'PEDIDOS' | 'PRODUCTOS' | 'COTIZACIONES' | 'ARCHIVO' | 'INDICADORES'): void {
     this.ngZone.run(() => {
       this.moduloActivo = modulo;
+      this.menuAbierto = false;
       this.cdr.detectChanges();
     });
-    if (modulo === 'ARCHIVO') this.cargarArchivo();
+    if (modulo === 'ARCHIVO' || modulo === 'INDICADORES') this.cargarArchivo();
     if (modulo === 'COTIZACIONES') this.cargarCotizaciones();
   }
 
@@ -808,6 +809,94 @@ private apiCotizacionesUrl = environment.apiUrl.replace(/\/pedidos$/, '/cotizaci
       this.notificacionReciente = '';
       this.cdr.detectChanges();
     });
+  }
+
+  // ---------- Menú lateral adaptable y títulos ----------
+  menuAbierto = false;
+  alternarMenu(): void { this.menuAbierto = !this.menuAbierto; }
+
+  tituloModulo(): string {
+    const titulos: Record<string, string> = {
+      PEDIDOS: this.rolSeleccionado === 'ADMIN' ? 'Despachos y envíos' : 'Mesa de picking y bodega',
+      PRODUCTOS: 'Inventario y stock',
+      COTIZACIONES: 'Bandeja de cotizaciones',
+      ARCHIVO: 'Archivo',
+      INDICADORES: 'Panel de indicadores'
+    };
+    return titulos[this.moduloActivo] || 'Pedidos 360';
+  }
+
+  // ---------- Panel de indicadores ----------
+  clp(valor: number | undefined): string {
+    return '$' + Math.round(valor || 0).toLocaleString('es-CL');
+  }
+
+  get totalActivo(): number { return this.pedidos.reduce((suma, p) => suma + (p.total || 0), 0); }
+
+  get entregadasArchivo(): number {
+    return this.archivoPedidos.filter(p => p.estado === 'Entregado' && !p.eliminado).length;
+  }
+
+  get ordenesSinFecha(): number { return this.pedidos.filter(p => !p.fechaCreacion).length; }
+
+  get pedidosPorDia(): { etiqueta: string; cantidad: number; pct: number }[] {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const dias: { fecha: number; etiqueta: string; cantidad: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(hoy);
+      d.setDate(hoy.getDate() - i);
+      dias.push({ fecha: d.getTime(), etiqueta: d.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric' }), cantidad: 0 });
+    }
+    const todos = [...this.pedidos, ...this.archivoPedidos.filter(p => !p.eliminado)];
+    for (const p of todos) {
+      if (!p.fechaCreacion) continue;
+      const f = new Date(p.fechaCreacion);
+      f.setHours(0, 0, 0, 0);
+      const dia = dias.find(x => x.fecha === f.getTime());
+      if (dia) dia.cantidad++;
+    }
+    const maximo = Math.max(1, ...dias.map(d => d.cantidad));
+    return dias.map(d => ({ etiqueta: d.etiqueta, cantidad: d.cantidad, pct: (d.cantidad / maximo) * 100 }));
+  }
+
+  get embudoDespacho(): { nombre: string; valor: number; pct: number }[] {
+    const etapas = [
+      { nombre: 'En preparación', valor: this.getCount('En Preparacion') },
+      { nombre: 'Listo para despacho', valor: this.getCount('Listo para Despacho') },
+      { nombre: 'En tránsito', valor: this.getCount('En Transito') },
+      { nombre: 'En reparto', valor: this.getCount('En Reparto') },
+      { nombre: 'Entregado', valor: this.entregadasArchivo }
+    ];
+    const maximo = Math.max(1, ...etapas.map(e => e.valor));
+    return etapas.map(e => ({ ...e, pct: (e.valor / maximo) * 100 }));
+  }
+
+  get distribucionCourier(): { nombre: string; cantidad: number; pct: number }[] {
+    const mapa = new Map<string, number>();
+    for (const p of this.pedidos) {
+      const c = p.courier || 'Sin courier';
+      mapa.set(c, (mapa.get(c) || 0) + 1);
+    }
+    const total = this.pedidos.length || 1;
+    return Array.from(mapa.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([nombre, cantidad]) => ({ nombre, cantidad, pct: Math.round((cantidad / total) * 100) }));
+  }
+
+  get alertasStock(): Producto[] {
+    return this.productos
+      .filter(p => p.stock <= (p.stockMinimo || 0))
+      .sort((a, b) => (a.stock - (a.stockMinimo || 0)) - (b.stock - (b.stockMinimo || 0)))
+      .slice(0, 6);
+  }
+
+  get topClientes(): { nombre: string; monto: number; pct: number }[] {
+    const mapa = new Map<string, number>();
+    for (const p of this.pedidos) mapa.set(p.cliente, (mapa.get(p.cliente) || 0) + (p.total || 0));
+    const lista = Array.from(mapa.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const maximo = Math.max(1, ...lista.map(x => x[1]));
+    return lista.map(([nombre, monto]) => ({ nombre, monto, pct: (monto / maximo) * 100 }));
   }
 
   // Unifica estados antiguos o escritos distinto (p. ej. datos de prueba) con los del flujo oficial

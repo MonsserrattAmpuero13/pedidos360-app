@@ -216,66 +216,36 @@
 </div>
 
 <!-- ================= VISTA PRIVADA: TORRE DE CONTROL ENTERPRISE ================= -->
-<div *ngIf="auth.isAuthenticated$ | async" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; background: #f8fafc; margin: 0; padding: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; box-sizing: border-box; z-index: 9999;">
+<div *ngIf="auth.isAuthenticated$ | async" class="privado" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; background: #f8fafc; margin: 0; padding: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; box-sizing: border-box; z-index: 9999;">
   
-  <!-- SIDEBAR IZQUIERDO FIJO -->
-  <aside style="width: 240px; height: 100vh; background: #0f172a; color: #94a3b8; display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid #1e293b; box-sizing: border-box;">
-    
-    <div style="padding: 16px 20px; border-bottom: 1px solid #1e293b; background: #0b0f19; box-sizing: border-box;">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <div style="background: #2563eb; color: white; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 700; border-radius: 4px; font-size: 13px;">360</div>
-        <div>
-          <div style="color: #ffffff; font-weight: 700; font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">Pedidos 360</div>
-          <div style="font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Distribuidora Andes</div>
-        </div>
+  <!-- MENÚ LATERAL (se oculta en pantallas pequeñas y se abre con el botón) -->
+  <div class="nav-fondo" *ngIf="menuAbierto" (click)="menuAbierto = false"></div>
+  <aside class="nav" [class.abierto]="menuAbierto">
+    <div class="nav-marca">
+      <div class="nav-logo">360</div>
+      <div>
+        <div class="nav-nombre">Pedidos 360</div>
+        <div class="nav-sub">Distribuidora Andes</div>
       </div>
     </div>
 
-    <!-- Navegación Lateral -->
-    <nav style="padding: 16px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1;">
-      <div style="font-size: 9px; font-weight: 700; color: #475569; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.5px;">Módulos del Sistema</div>
-      
-      <button (click)="cambiarModulo('PEDIDOS')" 
-        [style.background]="moduloActivo === 'PEDIDOS' ? '#1e293b' : 'transparent'"
-        [style.color]="moduloActivo === 'PEDIDOS' ? '#ffffff' : '#94a3b8'"
-        style="display: flex; align-items: center; width: 100%; padding: 8px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
-        {{ rolSeleccionado === 'ADMIN' ? 'Despachos y Envíos' : 'Órdenes de Bodega' }}
+    <nav class="nav-lista">
+      <div class="nav-grupo">Módulos</div>
+      <button class="nav-item" [class.activo]="moduloActivo === 'PEDIDOS'" (click)="cambiarModulo('PEDIDOS')">
+        {{ rolSeleccionado === 'ADMIN' ? 'Despachos y envíos' : 'Órdenes de bodega' }}
       </button>
-
-      <button (click)="cambiarModulo('PRODUCTOS')" 
-        [style.background]="moduloActivo === 'PRODUCTOS' ? '#1e293b' : 'transparent'"
-        [style.color]="moduloActivo === 'PRODUCTOS' ? '#ffffff' : '#94a3b8'"
-        style="display: flex; align-items: center; width: 100%; padding: 8px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
-        Inventario y Stock
-      </button>
-
-      <button *ngIf="rolSeleccionado === 'ADMIN'" (click)="cambiarModulo('COTIZACIONES')" 
-        [style.background]="moduloActivo === 'COTIZACIONES' ? '#1e293b' : 'transparent'"
-        [style.color]="moduloActivo === 'COTIZACIONES' ? '#ffffff' : '#94a3b8'"
-        style="display: flex; align-items: center; width: 100%; padding: 8px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
-        Bandeja de Cotizaciones
-      </button>
-
-      <button *ngIf="rolSeleccionado === 'ADMIN'" (click)="cambiarModulo('ARCHIVO')" 
-        [style.background]="moduloActivo === 'ARCHIVO' ? '#1e293b' : 'transparent'"
-        [style.color]="moduloActivo === 'ARCHIVO' ? '#ffffff' : '#94a3b8'"
-        style="display: flex; align-items: center; width: 100%; padding: 8px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
-        Archivo
-      </button>
+      <button *ngIf="rolSeleccionado === 'ADMIN'" class="nav-item" [class.activo]="moduloActivo === 'INDICADORES'" (click)="cambiarModulo('INDICADORES')">Panel de indicadores</button>
+      <button class="nav-item" [class.activo]="moduloActivo === 'PRODUCTOS'" (click)="cambiarModulo('PRODUCTOS')">Inventario y stock</button>
+      <button *ngIf="rolSeleccionado === 'ADMIN'" class="nav-item" [class.activo]="moduloActivo === 'COTIZACIONES'" (click)="cambiarModulo('COTIZACIONES')">Bandeja de cotizaciones</button>
+      <button *ngIf="rolSeleccionado === 'ADMIN'" class="nav-item" [class.activo]="moduloActivo === 'ARCHIVO'" (click)="cambiarModulo('ARCHIVO')">Archivo</button>
     </nav>
 
-    <div style="padding: 16px; border-top: 1px solid #1e293b; background: #0b0f19; box-sizing: border-box;">
-      <div style="font-size: 10px; color: #64748b; margin-bottom: 2px;">Usuario:</div>
-      <div style="color: #ffffff; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px;">
-        {{ (auth.user$ | async)?.name || (auth.user$ | async)?.email || userName }}
-      </div>
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="background: #1e293b; color: #38bdf8; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 3px; border: 1px solid #334155;">
-          {{ rolSeleccionado }}
-        </span>
-        <button (click)="logout()" style="background: #dc2626; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
-          Cerrar Sesión
-        </button>
+    <div class="nav-usuario">
+      <div class="nav-usuario-et">Sesión iniciada</div>
+      <div class="nav-usuario-nom">{{ (auth.user$ | async)?.name || (auth.user$ | async)?.email || userName }}</div>
+      <div class="nav-usuario-fila">
+        <span class="nav-rol">{{ rolSeleccionado }}</span>
+        <button class="nav-salir" (click)="logout()">Cerrar sesión</button>
       </div>
     </div>
   </aside>
@@ -283,20 +253,17 @@
   <!-- ÁREA DE TRABAJO PRINCIPAL (DERECHA) -->
   <main style="flex: 1; height: 100vh; display: flex; flex-direction: column; overflow-y: auto; background: #f8fafc; box-sizing: border-box;">
     
-    <!-- Barra Superior -->
-    <header style="background: #ffffff; padding: 0 24px; height: 60px; border-bottom: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; box-sizing: border-box;">
-      <div style="display: flex; align-items: center; gap: 16px;">
-        <h1 style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
-          {{ rolSeleccionado === 'ADMIN' ? 'Torre de Control Logístico' : 'Mesa de Picking y Bodega' }}
-        </h1>
-        <span style="color: #64748b; font-size: 12px; border-left: 1px solid #cbd5e1; padding-left: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
-          Sistema de Distribución y Trazabilidad Andes
-        </span>
-      </div>
+    <!-- Barra superior -->
+    <header class="topbar">
+      <button class="topbar-menu" (click)="alternarMenu()" aria-label="Abrir menú">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <h1 class="topbar-titulo">{{ tituloModulo() }}</h1>
+      <span class="topbar-sub">Sistema de distribución y trazabilidad Andes</span>
     </header>
 
     <!-- Contenido Principal -->
-    <div style="padding: 24px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; flex: 1;">
+    <div class="contenido">
       
       <!-- Notificación del Sistema (Compacta y Limpia Arriba) -->
       <div *ngIf="notificacionReciente" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; width: 100%; padding: 10px 16px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; box-sizing: border-box; box-shadow: 0 1px 3px rgba(0,0,0,0.05); flex-shrink: 0;">
@@ -304,62 +271,91 @@
         <button (click)="descartarNotificacion()" style="background: transparent; border: none; color: #64748b; cursor: pointer; font-weight: bold; font-size: 15px; padding: 2px 6px; line-height: 1;">X</button>
       </div>
 
-      <!-- SECCIÓN SUPERIOR: MÉTRICAS + GRÁFICO DE TORTA GIGANTE -->
-      <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; width: 100%;">
-        
-        <!-- Métricas Admin -->
-        <section *ngIf="rolSeleccionado === 'ADMIN'" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-content: start;">
-          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
-            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">Total Órdenes</span>
-            <span style="font-size: 26px; font-weight: 800; color: #0f172a;">{{ pedidos.length }}</span>
-          </div>
-          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
-            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">En Preparación</span>
-            <span style="font-size: 26px; font-weight: 800; color: #d97706;">{{ getCount('En Preparacion') }}</span>
-          </div>
-          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
-            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">En Ruta (GPS)</span>
-            <span style="font-size: 26px; font-weight: 800; color: #2563eb;">{{ getCountRuta() }}</span>
-          </div>
-          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
-            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">Incidencias</span>
-            <span style="font-size: 26px; font-weight: 800; color: #dc2626;">{{ getCountIncidencias() }}</span>
-          </div>
-        </section>
+      <!-- ================= MÓDULO: PANEL DE INDICADORES ================= -->
+      <div *ngIf="moduloActivo === 'INDICADORES' && rolSeleccionado === 'ADMIN'" class="ind">
 
-        <!-- Métricas Operador -->
-        <section *ngIf="rolSeleccionado === 'OPERADOR'" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-content: start;">
-          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
-            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">Pendientes Picking</span>
-            <span style="font-size: 26px; font-weight: 800; color: #d97706;">{{ getCount('En Preparacion') }}</span>
-          </div>
-          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
-            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">Listos Despacho</span>
-            <span style="font-size: 26px; font-weight: 800; color: #16a34a;">{{ getCount('Listo para Despacho') }}</span>
-          </div>
-        </section>
-
-        <!-- Gráfico de Torta Dinámico con Datos Reales -->
-        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;">
-          <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 14px; width: 100%; text-align: left; letter-spacing: 0.5px;">Distribución de Órdenes</span>
-          <div style="display: flex; align-items: center; gap: 24px; justify-content: center; width: 100%;">
-            <svg width="130" height="130" viewBox="0 0 32 32" style="transform: rotate(-90deg);">
-              <circle cx="16" cy="16" r="13" fill="none" stroke="#e2e8f0" stroke-width="5"></circle>
-              <circle cx="16" cy="16" r="13" fill="none" stroke="#2563eb" stroke-width="5" stroke-dasharray="82" [style.stroke-dashoffset]="pedidos.length > 0 ? 82 - (getCountRuta() / pedidos.length) * 82 : 82"></circle>
-              <circle cx="16" cy="16" r="13" fill="none" stroke="#d97706" stroke-width="5" stroke-dasharray="82" [style.stroke-dashoffset]="pedidos.length > 0 ? 82 - (getCount('En Preparacion') / pedidos.length) * 82 : 82"></circle>
-            </svg>
-            <div style="font-size: 11px; color: #334155; display: flex; flex-direction: column; gap: 6px; font-weight: 600;">
-              <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #2563eb; border-radius: 50%;"></span> En Ruta: {{ getCountRuta() }}</div>
-              <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #d97706; border-radius: 50%;"></span> Preparación: {{ getCount('En Preparacion') }}</div>
-              <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #cbd5e1; border-radius: 50%;"></span> Total: {{ pedidos.length }}</div>
-            </div>
-          </div>
+        <div class="kpis">
+          <div class="kpi"><span class="kpi-et">Órdenes activas</span><span class="kpi-num">{{ pedidos.length }}</span><span class="kpi-nota">en curso</span></div>
+          <div class="kpi"><span class="kpi-et">En preparación</span><span class="kpi-num">{{ getCount('En Preparacion') }}</span><span class="kpi-nota">en bodega</span></div>
+          <div class="kpi"><span class="kpi-et">En ruta</span><span class="kpi-num">{{ getCountRuta() }}</span><span class="kpi-nota">tránsito y reparto</span></div>
+          <div class="kpi"><span class="kpi-et">Incidencias</span><span class="kpi-num" [class.alerta]="getCountIncidencias() > 0">{{ getCountIncidencias() }}</span><span class="kpi-nota">por resolver</span></div>
+          <div class="kpi"><span class="kpi-et">Valor en curso</span><span class="kpi-num">{{ clp(totalActivo) }}</span><span class="kpi-nota">órdenes activas</span></div>
+          <div class="kpi"><span class="kpi-et">Entregadas</span><span class="kpi-num">{{ entregadasArchivo }}</span><span class="kpi-nota">en el archivo</span></div>
         </div>
 
+        <div class="ind-grid">
+          <section class="tarjeta ancha">
+            <h4>Órdenes creadas por día</h4>
+            <p class="tarjeta-nota">Últimos 7 días<span *ngIf="ordenesSinFecha > 0"> · {{ ordenesSinFecha }} orden(es) antigua(s) sin fecha registrada no se incluyen</span></p>
+            <div class="col-barras">
+              <div class="col" *ngFor="let d of pedidosPorDia">
+                <span class="col-val">{{ d.cantidad }}</span>
+                <div class="col-barra" [style.height.%]="d.pct * 0.75"></div>
+                <span class="col-et">{{ d.etiqueta }}</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="tarjeta">
+            <h4>Embudo de despacho</h4>
+            <p class="tarjeta-nota">Órdenes por etapa del flujo logístico</p>
+            <div class="fila-barra" *ngFor="let e of embudoDespacho">
+              <span class="nombre">{{ e.nombre }}</span>
+              <span class="pista"><i [style.width.%]="e.pct"></i></span>
+              <span class="valor">{{ e.valor }}</span>
+            </div>
+          </section>
+
+          <section class="tarjeta">
+            <h4>Distribución por courier</h4>
+            <p class="tarjeta-nota">Órdenes activas por transportista</p>
+            <div class="fila-barra" *ngFor="let c of distribucionCourier">
+              <span class="nombre">{{ c.nombre }}</span>
+              <span class="pista"><i [style.width.%]="c.pct"></i></span>
+              <span class="valor">{{ c.cantidad }} · {{ c.pct }}%</span>
+            </div>
+            <p class="vacio-sobrio" *ngIf="distribucionCourier.length === 0">Sin órdenes activas.</p>
+          </section>
+
+          <section class="tarjeta">
+            <h4>Alertas de stock</h4>
+            <p class="tarjeta-nota">Productos en o bajo su mínimo. Cada alerta se publica en el topic <strong>alertas-stock</strong> de Kafka.</p>
+            <ul class="lista-alerta" *ngIf="alertasStock.length > 0">
+              <li *ngFor="let a of alertasStock">
+                <span>{{ a.nombre }}<br><small style="color:#6b7280;">Stock {{ a.stock }} · mínimo {{ a.stockMinimo }}</small></span>
+                <span class="etq" [class.sin]="a.stock <= 0" [class.bajo]="a.stock > 0">{{ a.stock <= 0 ? 'Sin stock' : 'Bajo mínimo' }}</span>
+              </li>
+            </ul>
+            <p class="vacio-sobrio" *ngIf="alertasStock.length === 0">Ningún producto bajo su stock mínimo.</p>
+          </section>
+
+          <section class="tarjeta">
+            <h4>Clientes con mayor valor en curso</h4>
+            <p class="tarjeta-nota">Top 5 según el total de sus órdenes activas</p>
+            <div class="fila-barra ancho-valor" *ngFor="let c of topClientes">
+              <span class="nombre">{{ c.nombre }}</span>
+              <span class="pista"><i [style.width.%]="c.pct"></i></span>
+              <span class="valor">{{ clp(c.monto) }}</span>
+            </div>
+            <p class="vacio-sobrio" *ngIf="topClientes.length === 0">Sin órdenes activas.</p>
+          </section>
+        </div>
       </div>
 
       <!-- ================= MÓDULO 1: PEDIDOS / DESPACHOS ================= -->
       <div *ngIf="moduloActivo === 'PEDIDOS'" style="width: 100%;">
+
+        <div class="resumen" *ngIf="rolSeleccionado === 'ADMIN'">
+          <div><span>Órdenes activas</span><strong>{{ pedidos.length }}</strong></div>
+          <div><span>En preparación</span><strong>{{ getCount('En Preparacion') }}</strong></div>
+          <div><span>En ruta</span><strong>{{ getCountRuta() }}</strong></div>
+          <div><span>Incidencias</span><strong [class.alerta]="getCountIncidencias() > 0">{{ getCountIncidencias() }}</strong></div>
+          <div class="resumen-link"><a (click)="cambiarModulo('INDICADORES')">Ver panel de indicadores</a></div>
+        </div>
+        <div class="resumen" *ngIf="rolSeleccionado === 'OPERADOR'">
+          <div><span>Pendientes de picking</span><strong>{{ getCount('En Preparacion') }}</strong></div>
+          <div><span>Listos para despacho</span><strong>{{ getCount('Listo para Despacho') }}</strong></div>
+        </div>
         
         <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; width: 100%; padding: 14px 18px; border-radius: 6px 6px 0 0; border: 1px solid #cbd5e1; border-bottom: none; box-sizing: border-box;">
           <div>
