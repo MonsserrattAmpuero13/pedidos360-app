@@ -203,7 +203,7 @@
 
         <div style="display: flex; gap: 8px; justify-content: flex-end;">
           <button (click)="cerrarModalCotizar()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Cancelar</button>
-          <button (click)="enviarSolicitudCotizacion()" style="background: #2D6A4F; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Enviar Cotizacion</button>
+          <button (click)="enviarSolicitudCotizacion()" [disabled]="enviandoCotizacion" [style.opacity]="enviandoCotizacion ? 0.65 : 1" style="background: #2D6A4F; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">{{ enviandoCotizacion ? 'Enviando...' : 'Enviar Cotizacion' }}</button>
         </div>
       </div>
     </div>

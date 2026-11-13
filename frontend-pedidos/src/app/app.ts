@@ -1110,7 +1110,11 @@ private apiCotizacionesUrl = environment.apiUrl.replace(/\/pedidos$/, '/cotizaci
   }
 
   // Las cotizaciones se guardan en el servidor: con fecha, historial y archivo
+  // Evita enviar la misma cotización varias veces mientras el servidor responde
+  enviandoCotizacion = false;
+
   enviarSolicitudCotizacion(): void {
+    if (this.enviandoCotizacion) return;
     if (!this.nuevaCotizacion.cliente.trim() || !this.nuevaCotizacion.region || !this.nuevaCotizacion.comuna || !this.productoSeleccionadoParaCotizar) {
       alert('Por favor complete todos los campos obligatorios para la cotización.');
       return;
@@ -1134,9 +1138,11 @@ private apiCotizacionesUrl = environment.apiUrl.replace(/\/pedidos$/, '/cotizaci
       totalEst: prod.precio * cantidad
     };
 
+    this.enviandoCotizacion = true;
     this.http.post<Cotizacion>(this.apiCotizacionesUrl, solicitud, this.opciones()).subscribe({
       next: (creada) => {
         this.ngZone.run(() => {
+          this.enviandoCotizacion = false;
           if (this.sesionActiva) this.cotizaciones.unshift(creada);
           alert('Cotización enviada con éxito. El equipo comercial la revisará en la torre de control.');
           this.cerrarModalCotizar();
@@ -1145,6 +1151,7 @@ private apiCotizacionesUrl = environment.apiUrl.replace(/\/pedidos$/, '/cotizaci
       },
       error: (e: HttpErrorResponse) => {
         this.ngZone.run(() => {
+          this.enviandoCotizacion = false;
           alert(e.status === 409
             ? (e.error?.mensaje ?? 'Ya existe una cotización igual en revisión.')
             : (e.error?.mensaje ?? 'No se pudo enviar la cotización. Intenta nuevamente en unos minutos.'));
