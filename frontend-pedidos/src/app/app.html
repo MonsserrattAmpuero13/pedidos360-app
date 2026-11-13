@@ -274,6 +274,41 @@
       <!-- ================= MÓDULO: PANEL DE INDICADORES ================= -->
       <div *ngIf="moduloActivo === 'INDICADORES' && rolSeleccionado === 'ADMIN'" class="ind">
 
+        <div class="ind-titulo">Ventas · {{ nombreMes }}</div>
+
+        <div class="ventas-grid">
+          <section class="tarjeta meta">
+            <h4>Meta del mes</h4>
+            <ng-container *ngIf="metaMensual > 0; else sinMeta">
+              <div class="meta-cifras"><strong>{{ clp(ventasMes) }}</strong><span>de {{ clp(metaMensual) }}</span></div>
+              <div class="pista grande"><i [style.width.%]="cumplimientoMeta"></i></div>
+              <div class="meta-pie">
+                <span>{{ cumplimientoMeta | number:'1.0-0' }}% cumplido</span>
+                <span>{{ faltaMeta > 0 ? 'Faltan ' + clp(faltaMeta) : 'Meta alcanzada' }}</span>
+              </div>
+              <p class="tarjeta-nota" *ngIf="faltaMeta > 0">Quedan {{ diasRestantesMes }} día(s) del mes: hacen falta unos {{ clp(ritmoNecesario) }} por día para llegar a la meta.</p>
+            </ng-container>
+            <ng-template #sinMeta><p class="vacio-sobrio">Aún no defines una meta para este mes.</p></ng-template>
+            <div class="meta-editar">
+              <input type="text" inputmode="numeric" [(ngModel)]="metaTemporal" placeholder="Nueva meta en pesos, ej. 2000000" />
+              <button (click)="guardarMeta()">Guardar meta</button>
+            </div>
+            <p class="tarjeta-nota">La meta se guarda en este navegador.</p>
+          </section>
+
+          <div class="kpis kpis-ventas">
+            <div class="kpi"><span class="kpi-et">Vendido en el mes</span><span class="kpi-num">{{ clp(ventasMes) }}</span><span class="kpi-nota">órdenes creadas este mes</span></div>
+            <div class="kpi"><span class="kpi-et">Cumplido en el mes</span><span class="kpi-num">{{ clp(cumplidoMes) }}</span><span class="kpi-nota">órdenes entregadas</span></div>
+            <div class="kpi"><span class="kpi-et">Por cumplir</span><span class="kpi-num">{{ clp(totalActivo) }}</span><span class="kpi-nota">órdenes aún en curso</span></div>
+            <div class="kpi"><span class="kpi-et">Cotizaciones por cerrar</span><span class="kpi-num">{{ clp(cotizacionesPorCerrar.monto) }}</span><span class="kpi-nota">{{ cotizacionesPorCerrar.cantidad }} abierta(s)</span></div>
+            <div class="kpi"><span class="kpi-et">Ticket promedio</span><span class="kpi-num">{{ clp(ticketPromedio) }}</span><span class="kpi-nota">por orden</span></div>
+            <div class="kpi"><span class="kpi-et">Acumulado histórico</span><span class="kpi-num">{{ clp(acumuladoHistorico) }}</span><span class="kpi-nota">incluye órdenes sin fecha</span></div>
+          </div>
+        </div>
+        <p class="nota-definiciones">Vendido: valor de las órdenes creadas en el mes. Cumplido: las que ya se entregaron. Por cumplir: las que siguen en curso. Las órdenes antiguas sin fecha de creación solo suman al acumulado histórico.</p>
+
+        <div class="ind-titulo">Operación</div>
+
         <div class="kpis">
           <div class="kpi"><span class="kpi-et">Órdenes activas</span><span class="kpi-num">{{ pedidos.length }}</span><span class="kpi-nota">en curso</span></div>
           <div class="kpi"><span class="kpi-et">En preparación</span><span class="kpi-num">{{ getCount('En Preparacion') }}</span><span class="kpi-nota">en bodega</span></div>
@@ -285,11 +320,15 @@
 
         <div class="ind-grid">
           <section class="tarjeta ancha">
-            <h4>Órdenes creadas por día</h4>
+            <h4>{{ vistaDia === 'ventas' ? 'Ventas por día' : 'Órdenes creadas por día' }}</h4>
+            <div class="selector">
+              <button [class.activo]="vistaDia === 'ordenes'" (click)="vistaDia = 'ordenes'">Órdenes</button>
+              <button [class.activo]="vistaDia === 'ventas'" (click)="vistaDia = 'ventas'">Ventas ($)</button>
+            </div>
             <p class="tarjeta-nota">Últimos 7 días<span *ngIf="ordenesSinFecha > 0"> · {{ ordenesSinFecha }} orden(es) antigua(s) sin fecha registrada no se incluyen</span></p>
             <div class="col-barras">
               <div class="col" *ngFor="let d of pedidosPorDia">
-                <span class="col-val">{{ d.cantidad }}</span>
+                <span class="col-val">{{ d.texto }}</span>
                 <div class="col-barra" [style.height.%]="d.pct * 0.75"></div>
                 <span class="col-et">{{ d.etiqueta }}</span>
               </div>

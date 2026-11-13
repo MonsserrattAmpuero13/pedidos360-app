@@ -231,7 +231,7 @@ private apiCotizacionesUrl = environment.apiUrl.replace(/\/pedidos$/, '/cotizaci
       this.cdr.detectChanges();
     });
     if (modulo === 'ARCHIVO' || modulo === 'INDICADORES') this.cargarArchivo();
-    if (modulo === 'COTIZACIONES') this.cargarCotizaciones();
+    if (modulo === 'COTIZACIONES' || modulo === 'INDICADORES') this.cargarCotizaciones();
   }
 
   cambiarSeccionPublica(seccion: 'inicio' | 'catalogo'): void {
@@ -839,25 +839,111 @@ private apiCotizacionesUrl = environment.apiUrl.replace(/\/pedidos$/, '/cotizaci
 
   get ordenesSinFecha(): number { return this.pedidos.filter(p => !p.fechaCreacion).length; }
 
-  get pedidosPorDia(): { etiqueta: string; cantidad: number; pct: number }[] {
+  // Vista del gráfico diario: cantidad de órdenes o monto vendido
+  vistaDia: 'ordenes' | 'ventas' = 'ordenes';
+
+  private compacto(valor: number): string {
+    return '$' + new Intl.NumberFormat('es-CL', { notation: 'compact', maximumFractionDigits: 1 }).format(valor);
+  }
+
+  get pedidosPorDia(): { etiqueta: string; texto: string; pct: number }[] {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    const dias: { fecha: number; etiqueta: string; cantidad: number }[] = [];
+    const dias: { fecha: number; etiqueta: string; cantidad: number; monto: number }[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(hoy);
       d.setDate(hoy.getDate() - i);
-      dias.push({ fecha: d.getTime(), etiqueta: d.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric' }), cantidad: 0 });
+      dias.push({ fecha: d.getTime(), etiqueta: d.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric' }), cantidad: 0, monto: 0 });
     }
-    const todos = [...this.pedidos, ...this.archivoPedidos.filter(p => !p.eliminado)];
-    for (const p of todos) {
-      if (!p.fechaCreacion) continue;
-      const f = new Date(p.fechaCreacion);
+    for (const p of this.ordenesConFecha()) {
+      const f = new Date(p.fechaCreacion as string);
       f.setHours(0, 0, 0, 0);
       const dia = dias.find(x => x.fecha === f.getTime());
-      if (dia) dia.cantidad++;
+      if (dia) { dia.cantidad++; dia.monto += p.total || 0; }
     }
-    const maximo = Math.max(1, ...dias.map(d => d.cantidad));
-    return dias.map(d => ({ etiqueta: d.etiqueta, cantidad: d.cantidad, pct: (d.cantidad / maximo) * 100 }));
+    const ventas = this.vistaDia === 'ventas';
+    const maximo = Math.max(1, ...dias.map(d => (ventas ? d.monto : d.cantidad)));
+    return dias.map(d => ({
+      etiqueta: d.etiqueta,
+      texto: ventas ? this.compacto(d.monto) : String(d.cantidad),
+      pct: ((ventas ? d.monto : d.cantidad) / maximo) * 100
+    }));
+  }
+
+  // ---------- Ventas y metas del mes ----------
+  metaMensual = this.leerMeta();
+  metaTemporal = '';
+  private claveMeta = 'pedidos360_meta_mensual';
+
+  private leerMeta(): number {
+    try { return Number(localStorage.getItem('pedidos360_meta_mensual')) || 0; } catch { return 0; }
+  }
+
+  guardarMeta(): void {
+    const valor = Math.round(Number(String(this.metaTemporal).replace(/[^0-9]/g, '')));
+    this.metaMensual = valor > 0 ? valor : 0;
+    try { localStorage.setItem(this.claveMeta, String(this.metaMensual)); } catch { /* sin almacenamiento local */ }
+    this.metaTemporal = '';
+  }
+
+  // Todas las órdenes que no fueron eliminadas (activas y archivadas)
+  private ordenesValidas(): Pedido[] {
+    return [...this.pedidos, ...this.archivoPedidos.filter(p => !p.eliminado)];
+  }
+
+  private ordenesConFecha(): Pedido[] {
+    return this.ordenesValidas().filter(p => !!p.fechaCreacion);
+  }
+
+  private esDelMes(fecha?: string): boolean {
+    if (!fecha) return false;
+    const f = new Date(fecha);
+    const hoy = new Date();
+    return f.getFullYear() === hoy.getFullYear() && f.getMonth() === hoy.getMonth();
+  }
+
+  get nombreMes(): string {
+    return new Date().toLocaleDateString('es-CL', { month: 'long', year: 'numeric' });
+  }
+
+  get ventasMes(): number {
+    return this.ordenesValidas().filter(p => this.esDelMes(p.fechaCreacion)).reduce((suma, p) => suma + (p.total || 0), 0);
+  }
+
+  get cumplidoMes(): number {
+    return this.archivoPedidos
+      .filter(p => p.estado === 'Entregado' && !p.eliminado && this.esDelMes(p.fechaCierre))
+      .reduce((suma, p) => suma + (p.total || 0), 0);
+  }
+
+  get acumuladoHistorico(): number {
+    return this.ordenesValidas().reduce((suma, p) => suma + (p.total || 0), 0);
+  }
+
+  get ticketPromedio(): number {
+    const n = this.ordenesValidas().length;
+    return n > 0 ? this.acumuladoHistorico / n : 0;
+  }
+
+  get cotizacionesPorCerrar(): { cantidad: number; monto: number } {
+    const abiertas = this.cotizaciones.filter(c => c.estado === 'PENDIENTE' || c.estado === 'CONTACTADO' || c.estado === 'ACEPTADA');
+    return { cantidad: abiertas.length, monto: abiertas.reduce((suma, c) => suma + (c.totalEst || 0), 0) };
+  }
+
+  get cumplimientoMeta(): number {
+    return this.metaMensual > 0 ? Math.min(100, (this.ventasMes / this.metaMensual) * 100) : 0;
+  }
+
+  get faltaMeta(): number { return Math.max(0, this.metaMensual - this.ventasMes); }
+
+  get diasRestantesMes(): number {
+    const hoy = new Date();
+    const ultimo = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
+    return ultimo - hoy.getDate() + 1;
+  }
+
+  get ritmoNecesario(): number {
+    return this.diasRestantesMes > 0 ? this.faltaMeta / this.diasRestantesMes : 0;
   }
 
   get embudoDespacho(): { nombre: string; valor: number; pct: number }[] {
