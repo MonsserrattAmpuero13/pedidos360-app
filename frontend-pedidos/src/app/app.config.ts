@@ -19,11 +19,13 @@ export const appConfig: ApplicationConfig = {
         audience: 'https://api-pedidos-360.azurewebsites.net'
       },
       httpInterceptor: {
+        // allowAnonymous: con sesión se envía el token; sin sesión (visitante del formulario público)
+        // la petición sale igual, sin token, y es el servidor quien decide si la acepta.
         allowedList: [
-          'https://pedidos360-apim.azure-api.net/*',
-          'https://api-pedidos-360-cjc8bmcbgmdjhxb2.westus3-01.azurewebsites.net/*',
-          'https://*.azurewebsites.net/*',
-          'http://localhost:8080/*'
+          { uri: 'https://pedidos360-apim.azure-api.net/*', allowAnonymous: true },
+          { uri: 'https://api-pedidos-360-cjc8bmcbgmdjhxb2.westus3-01.azurewebsites.net/*', allowAnonymous: true },
+          { uri: 'https://*.azurewebsites.net/*', allowAnonymous: true },
+          { uri: 'http://localhost:8080/*', allowAnonymous: true }
         ]
       }
     })
