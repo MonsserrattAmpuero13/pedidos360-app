@@ -52,7 +52,6 @@ for fila in "${TOPICOS[@]}"; do
 done
 
 echo "Resultado:"
-for fila in "${TOPICOS[@]}"; do
-  IFS='|' read -r nombre _ <<< "${fila}"
-  kafka kafka-topics --bootstrap-server "${BROKERS}" --describe --topic "${nombre}" | head -n 1
-done
+# Solo la primera línea de cada tópico (nombre, particiones, réplicas y configuración)
+kafka kafka-topics --bootstrap-server "${BROKERS}" --describe \
+  | grep -E '^Topic: (pedidos-creados|alertas-stock)' || true
