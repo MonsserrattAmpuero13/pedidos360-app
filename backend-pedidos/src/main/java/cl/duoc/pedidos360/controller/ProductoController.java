@@ -1,10 +1,12 @@
 package cl.duoc.pedidos360.controller;
 
+import cl.duoc.pedidos360.model.MovimientoStock;
 import cl.duoc.pedidos360.model.Producto;
 import cl.duoc.pedidos360.Service.InventarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,14 +48,27 @@ public class ProductoController {
     }
 
     @PatchMapping("/{id}/stock")
-    public ResponseEntity<Producto> ajustarStock(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
-        return ResponseEntity.ok(inventarioService.actualizarStock(id, body.get("stock")));
+    public ResponseEntity<Producto> ajustarStock(@PathVariable Long id, @RequestBody Map<String, Integer> body,
+                                                 @RequestHeader(value = "X-Usuario", required = false) String usuario,
+                                                 Authentication auth) {
+        return ResponseEntity.ok(inventarioService.actualizarStock(id, body.get("stock"), UsuarioUtil.actual(usuario, auth)));
+    }
+
+    /** Historial de movimientos de stock del producto, con la orden a la que corresponde cada descuento. */
+    @GetMapping("/{id}/movimientos")
+    public ResponseEntity<List<MovimientoStock>> movimientos(@PathVariable Long id) {
+        return ResponseEntity.ok(inventarioService.movimientosDe(id));
     }
 
     /** Descuenta stock al generar una guia. Responde 409 si el stock no alcanza. */
     @PostMapping("/{id}/descontar")
-    public ResponseEntity<Producto> descontar(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
-        return ResponseEntity.ok(inventarioService.descontarStock(id, body.get("cantidad")));
+    public ResponseEntity<Producto> descontar(@PathVariable Long id, @RequestBody Map<String, Object> body,
+                                              @RequestHeader(value = "X-Usuario", required = false) String usuario,
+                                              Authentication auth) {
+        Integer cantidad = body.get("cantidad") instanceof Number n ? n.intValue() : null;
+        String referencia = body.get("referencia") instanceof String r && !r.isBlank() ? r : null;
+        String cliente = body.get("cliente") instanceof String c && !c.isBlank() ? c : null;
+        return ResponseEntity.ok(inventarioService.descontarStock(id, cantidad, referencia, cliente, UsuarioUtil.actual(usuario, auth)));
     }
 
     // --- Errores controlados: la API devuelve un mensaje legible en vez de un 500 ---

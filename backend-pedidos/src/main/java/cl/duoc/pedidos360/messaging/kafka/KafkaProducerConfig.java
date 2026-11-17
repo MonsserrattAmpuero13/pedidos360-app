@@ -33,6 +33,15 @@ public class KafkaProducerConfig {
         // Un mensaje se da por recibido solo cuando las replicas sincronizadas lo tienen (min.insync.replicas=2)
         props.put(ProducerConfig.ACKS_CONFIG, "all");
         props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+        props.put(ProducerConfig.CLIENT_ID_CONFIG, "pedidos360-productor");
+        // Reintentos ante fallas temporales; con idempotencia no se duplican mensajes ni se pierde el orden
+        props.put(ProducerConfig.RETRIES_CONFIG, 5);
+        props.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 300);
+        props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
+        // Agrupa mensajes unos milisegundos y los comprime (gzip) para enviar menos datos por la red
+        props.put(ProducerConfig.LINGER_MS_CONFIG, 5);
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 32768);
+        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "gzip");
         // Si Kafka no responde, no dejar colgada la peticion del usuario
         props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 3000);
         props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 5000);

@@ -203,7 +203,7 @@
 
         <div style="display: flex; gap: 8px; justify-content: flex-end;">
           <button (click)="cerrarModalCotizar()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Cancelar</button>
-          <button (click)="enviarSolicitudCotizacion()" style="background: #2D6A4F; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Enviar Cotizacion</button>
+          <button (click)="enviarSolicitudCotizacion()" [disabled]="enviandoCotizacion" [style.opacity]="enviandoCotizacion ? 0.65 : 1" style="background: #2D6A4F; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">{{ enviandoCotizacion ? 'Enviando...' : 'Enviar Cotizacion' }}</button>
         </div>
       </div>
     </div>
@@ -216,59 +216,36 @@
 </div>
 
 <!-- ================= VISTA PRIVADA: TORRE DE CONTROL ENTERPRISE ================= -->
-<div *ngIf="auth.isAuthenticated$ | async" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; background: #f8fafc; margin: 0; padding: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; box-sizing: border-box; z-index: 9999;">
+<div *ngIf="auth.isAuthenticated$ | async" class="privado" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; background: #f8fafc; margin: 0; padding: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; box-sizing: border-box; z-index: 9999;">
   
-  <!-- SIDEBAR IZQUIERDO FIJO -->
-  <aside style="width: 240px; height: 100vh; background: #0f172a; color: #94a3b8; display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid #1e293b; box-sizing: border-box;">
-    
-    <div style="padding: 16px 20px; border-bottom: 1px solid #1e293b; background: #0b0f19; box-sizing: border-box;">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <div style="background: #2563eb; color: white; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 700; border-radius: 4px; font-size: 13px;">360</div>
-        <div>
-          <div style="color: #ffffff; font-weight: 700; font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">Pedidos 360</div>
-          <div style="font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Distribuidora Andes</div>
-        </div>
+  <!-- MENÚ LATERAL (se oculta en pantallas pequeñas y se abre con el botón) -->
+  <div class="nav-fondo" *ngIf="menuAbierto" (click)="menuAbierto = false"></div>
+  <aside class="nav" [class.abierto]="menuAbierto">
+    <div class="nav-marca">
+      <div class="nav-logo">360</div>
+      <div>
+        <div class="nav-nombre">Pedidos 360</div>
+        <div class="nav-sub">Distribuidora Andes</div>
       </div>
     </div>
 
-    <!-- Navegación Lateral -->
-    <nav style="padding: 16px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1;">
-      <div style="font-size: 9px; font-weight: 700; color: #475569; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.5px;">Módulos del Sistema</div>
-      
-      <button (click)="cambiarModulo('PEDIDOS')" 
-        [style.background]="moduloActivo === 'PEDIDOS' ? '#1e293b' : 'transparent'"
-        [style.color]="moduloActivo === 'PEDIDOS' ? '#ffffff' : '#94a3b8'"
-        style="display: flex; align-items: center; width: 100%; padding: 8px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
-        {{ rolSeleccionado === 'ADMIN' ? 'Despachos y Envíos' : 'Órdenes de Bodega' }}
+    <nav class="nav-lista">
+      <div class="nav-grupo">Módulos</div>
+      <button class="nav-item" [class.activo]="moduloActivo === 'PEDIDOS'" (click)="cambiarModulo('PEDIDOS')">
+        {{ rolSeleccionado === 'ADMIN' ? 'Despachos y envíos' : 'Órdenes de bodega' }}
       </button>
-
-      <button (click)="cambiarModulo('PRODUCTOS')" 
-        [style.background]="moduloActivo === 'PRODUCTOS' ? '#1e293b' : 'transparent'"
-        [style.color]="moduloActivo === 'PRODUCTOS' ? '#ffffff' : '#94a3b8'"
-        style="display: flex; align-items: center; width: 100%; padding: 8px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
-        Inventario y Stock
-      </button>
-
-      <button *ngIf="rolSeleccionado === 'ADMIN'" (click)="cambiarModulo('COTIZACIONES')" 
-        [style.background]="moduloActivo === 'COTIZACIONES' ? '#1e293b' : 'transparent'"
-        [style.color]="moduloActivo === 'COTIZACIONES' ? '#ffffff' : '#94a3b8'"
-        style="display: flex; align-items: center; width: 100%; padding: 8px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
-        Bandeja de Cotizaciones
-      </button>
+      <button *ngIf="rolSeleccionado === 'ADMIN'" class="nav-item" [class.activo]="moduloActivo === 'INDICADORES'" (click)="cambiarModulo('INDICADORES')">Panel de indicadores</button>
+      <button class="nav-item" [class.activo]="moduloActivo === 'PRODUCTOS'" (click)="cambiarModulo('PRODUCTOS')">Inventario y stock</button>
+      <button *ngIf="rolSeleccionado === 'ADMIN'" class="nav-item" [class.activo]="moduloActivo === 'COTIZACIONES'" (click)="cambiarModulo('COTIZACIONES')">Bandeja de cotizaciones</button>
+      <button *ngIf="rolSeleccionado === 'ADMIN'" class="nav-item" [class.activo]="moduloActivo === 'ARCHIVO'" (click)="cambiarModulo('ARCHIVO')">Archivo</button>
     </nav>
 
-    <div style="padding: 16px; border-top: 1px solid #1e293b; background: #0b0f19; box-sizing: border-box;">
-      <div style="font-size: 10px; color: #64748b; margin-bottom: 2px;">Usuario:</div>
-      <div style="color: #ffffff; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px;">
-        {{ (auth.user$ | async)?.name || (auth.user$ | async)?.email || userName }}
-      </div>
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="background: #1e293b; color: #38bdf8; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 3px; border: 1px solid #334155;">
-          {{ rolSeleccionado }}
-        </span>
-        <button (click)="logout()" style="background: #dc2626; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
-          Cerrar Sesión
-        </button>
+    <div class="nav-usuario">
+      <div class="nav-usuario-et">Sesión iniciada</div>
+      <div class="nav-usuario-nom">{{ (auth.user$ | async)?.name || (auth.user$ | async)?.email || userName }}</div>
+      <div class="nav-usuario-fila">
+        <span class="nav-rol">{{ rolSeleccionado }}</span>
+        <button class="nav-salir" (click)="logout()">Cerrar sesión</button>
       </div>
     </div>
   </aside>
@@ -276,20 +253,17 @@
   <!-- ÁREA DE TRABAJO PRINCIPAL (DERECHA) -->
   <main style="flex: 1; height: 100vh; display: flex; flex-direction: column; overflow-y: auto; background: #f8fafc; box-sizing: border-box;">
     
-    <!-- Barra Superior -->
-    <header style="background: #ffffff; padding: 0 24px; height: 60px; border-bottom: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; box-sizing: border-box;">
-      <div style="display: flex; align-items: center; gap: 16px;">
-        <h1 style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
-          {{ rolSeleccionado === 'ADMIN' ? 'Torre de Control Logístico' : 'Mesa de Picking y Bodega' }}
-        </h1>
-        <span style="color: #64748b; font-size: 12px; border-left: 1px solid #cbd5e1; padding-left: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
-          Sistema de Distribución y Trazabilidad Andes
-        </span>
-      </div>
+    <!-- Barra superior -->
+    <header class="topbar">
+      <button class="topbar-menu" (click)="alternarMenu()" aria-label="Abrir menú">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <h1 class="topbar-titulo">{{ tituloModulo() }}</h1>
+      <span class="topbar-sub">Sistema de distribución y trazabilidad Andes</span>
     </header>
 
     <!-- Contenido Principal -->
-    <div style="padding: 24px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; flex: 1;">
+    <div class="contenido">
       
       <!-- Notificación del Sistema (Compacta y Limpia Arriba) -->
       <div *ngIf="notificacionReciente" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; width: 100%; padding: 10px 16px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; box-sizing: border-box; box-shadow: 0 1px 3px rgba(0,0,0,0.05); flex-shrink: 0;">
@@ -297,62 +271,147 @@
         <button (click)="descartarNotificacion()" style="background: transparent; border: none; color: #64748b; cursor: pointer; font-weight: bold; font-size: 15px; padding: 2px 6px; line-height: 1;">X</button>
       </div>
 
-      <!-- SECCIÓN SUPERIOR: MÉTRICAS + GRÁFICO DE TORTA GIGANTE -->
-      <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; width: 100%;">
-        
-        <!-- Métricas Admin -->
-        <section *ngIf="rolSeleccionado === 'ADMIN'" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-content: start;">
-          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
-            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">Total Órdenes</span>
-            <span style="font-size: 26px; font-weight: 800; color: #0f172a;">{{ pedidos.length }}</span>
-          </div>
-          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
-            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">En Preparación</span>
-            <span style="font-size: 26px; font-weight: 800; color: #d97706;">{{ getCount('En Preparacion') }}</span>
-          </div>
-          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
-            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">En Ruta (GPS)</span>
-            <span style="font-size: 26px; font-weight: 800; color: #2563eb;">{{ getCountRuta() }}</span>
-          </div>
-          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
-            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">Incidencias</span>
-            <span style="font-size: 26px; font-weight: 800; color: #dc2626;">{{ getCountIncidencias() }}</span>
-          </div>
-        </section>
+      <!-- ================= MÓDULO: PANEL DE INDICADORES ================= -->
+      <div *ngIf="moduloActivo === 'INDICADORES' && rolSeleccionado === 'ADMIN'" class="ind">
 
-        <!-- Métricas Operador -->
-        <section *ngIf="rolSeleccionado === 'OPERADOR'" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-content: start;">
-          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
-            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">Pendientes Picking</span>
-            <span style="font-size: 26px; font-weight: 800; color: #d97706;">{{ getCount('En Preparacion') }}</span>
-          </div>
-          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-sizing: border-box;">
-            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">Listos Despacho</span>
-            <span style="font-size: 26px; font-weight: 800; color: #16a34a;">{{ getCount('Listo para Despacho') }}</span>
-          </div>
-        </section>
-
-        <!-- Gráfico de Torta Dinámico con Datos Reales -->
-        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;">
-          <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 14px; width: 100%; text-align: left; letter-spacing: 0.5px;">Distribución de Órdenes</span>
-          <div style="display: flex; align-items: center; gap: 24px; justify-content: center; width: 100%;">
-            <svg width="130" height="130" viewBox="0 0 32 32" style="transform: rotate(-90deg);">
-              <circle cx="16" cy="16" r="13" fill="none" stroke="#e2e8f0" stroke-width="5"></circle>
-              <circle cx="16" cy="16" r="13" fill="none" stroke="#2563eb" stroke-width="5" stroke-dasharray="82" [style.stroke-dashoffset]="pedidos.length > 0 ? 82 - (getCountRuta() / pedidos.length) * 82 : 82"></circle>
-              <circle cx="16" cy="16" r="13" fill="none" stroke="#d97706" stroke-width="5" stroke-dasharray="82" [style.stroke-dashoffset]="pedidos.length > 0 ? 82 - (getCount('En Preparacion') / pedidos.length) * 82 : 82"></circle>
-            </svg>
-            <div style="font-size: 11px; color: #334155; display: flex; flex-direction: column; gap: 6px; font-weight: 600;">
-              <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #2563eb; border-radius: 50%;"></span> En Ruta: {{ getCountRuta() }}</div>
-              <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #d97706; border-radius: 50%;"></span> Preparación: {{ getCount('En Preparacion') }}</div>
-              <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #cbd5e1; border-radius: 50%;"></span> Total: {{ pedidos.length }}</div>
-            </div>
-          </div>
+        <div class="ind-barra">
+          <span>Actualizado a las {{ ultimaActualizacion || '—' }} · se renueva solo cada 20 segundos</span>
+          <button (click)="refrescarPanel()">Actualizar ahora</button>
         </div>
 
+        <div class="ind-titulo">Ventas · {{ nombreMes }}</div>
+
+        <div class="ventas-grid">
+          <section class="tarjeta meta">
+            <h4>Meta del mes</h4>
+            <ng-container *ngIf="metaMensual > 0; else sinMeta">
+              <div class="meta-cifras"><strong>{{ clp(ventasMes) }}</strong><span>de {{ clp(metaMensual) }}</span></div>
+              <div class="pista grande"><i [style.width.%]="cumplimientoMeta"></i></div>
+              <div class="meta-pie">
+                <span>{{ cumplimientoMeta | number:'1.0-0' }}% cumplido</span>
+                <span>{{ faltaMeta > 0 ? 'Faltan ' + clp(faltaMeta) : 'Meta alcanzada' }}</span>
+              </div>
+              <p class="tarjeta-nota" *ngIf="faltaMeta > 0">Quedan {{ diasRestantesMes }} día(s) del mes: hacen falta unos {{ clp(ritmoNecesario) }} por día para llegar a la meta.</p>
+            </ng-container>
+            <ng-template #sinMeta><p class="vacio-sobrio">Aún no defines una meta para este mes.</p></ng-template>
+            <div class="meta-editar">
+              <input type="text" inputmode="numeric" [(ngModel)]="metaTemporal" placeholder="Nueva meta en pesos, ej. 2000000" />
+              <button (click)="guardarMeta()">Guardar meta</button>
+            </div>
+            <p class="tarjeta-nota">La meta se guarda en este navegador.</p>
+          </section>
+
+          <div class="kpis kpis-ventas">
+            <div class="kpi"><span class="kpi-et">Vendido en el mes</span><span class="kpi-num">{{ clp(ventasMes) }}</span><span class="kpi-nota">órdenes creadas este mes</span></div>
+            <div class="kpi"><span class="kpi-et">Cumplido en el mes</span><span class="kpi-num">{{ clp(cumplidoMes) }}</span><span class="kpi-nota">órdenes entregadas</span></div>
+            <div class="kpi"><span class="kpi-et">Por cumplir</span><span class="kpi-num">{{ clp(totalActivo) }}</span><span class="kpi-nota">órdenes aún en curso</span></div>
+            <div class="kpi"><span class="kpi-et">Cotizaciones por cerrar</span><span class="kpi-num">{{ clp(cotizacionesPorCerrar.monto) }}</span><span class="kpi-nota">{{ cotizacionesPorCerrar.cantidad }} abierta(s)</span></div>
+            <div class="kpi"><span class="kpi-et">Ticket promedio</span><span class="kpi-num">{{ clp(ticketPromedio) }}</span><span class="kpi-nota">por orden</span></div>
+            <div class="kpi"><span class="kpi-et">Acumulado histórico</span><span class="kpi-num">{{ clp(acumuladoHistorico) }}</span><span class="kpi-nota">incluye órdenes sin fecha</span></div>
+          </div>
+        </div>
+        <p class="nota-definiciones">Vendido: valor de las órdenes creadas en el mes. Cumplido: las que ya se entregaron. Por cumplir: las que siguen en curso. Las órdenes antiguas sin fecha de creación solo suman al acumulado histórico.</p>
+
+        <div class="ind-titulo">Operación</div>
+
+        <div class="kpis">
+          <div class="kpi"><span class="kpi-et">Órdenes activas</span><span class="kpi-num">{{ pedidos.length }}</span><span class="kpi-nota">en curso</span></div>
+          <div class="kpi"><span class="kpi-et">En preparación</span><span class="kpi-num">{{ getCount('En Preparacion') }}</span><span class="kpi-nota">en bodega</span></div>
+          <div class="kpi"><span class="kpi-et">En ruta</span><span class="kpi-num">{{ getCountRuta() }}</span><span class="kpi-nota">tránsito y reparto</span></div>
+          <div class="kpi"><span class="kpi-et">Incidencias</span><span class="kpi-num" [class.alerta]="getCountIncidencias() > 0">{{ getCountIncidencias() }}</span><span class="kpi-nota">por resolver</span></div>
+          <div class="kpi"><span class="kpi-et">Valor en curso</span><span class="kpi-num">{{ clp(totalActivo) }}</span><span class="kpi-nota">órdenes activas</span></div>
+          <div class="kpi"><span class="kpi-et">Entregadas</span><span class="kpi-num">{{ entregadasArchivo }}</span><span class="kpi-nota">en el archivo</span></div>
+        </div>
+
+        <div class="ind-grid">
+          <section class="tarjeta ancha">
+            <h4>{{ vistaDia === 'ventas' ? 'Ventas por día' : 'Órdenes creadas por día' }}</h4>
+            <div class="selector">
+              <button [class.activo]="vistaDia === 'ordenes'" (click)="vistaDia = 'ordenes'">Órdenes</button>
+              <button [class.activo]="vistaDia === 'ventas'" (click)="vistaDia = 'ventas'">Ventas ($)</button>
+            </div>
+            <p class="tarjeta-nota">Últimos 7 días<span *ngIf="ordenesSinFecha > 0"> · {{ ordenesSinFecha }} orden(es) antigua(s) sin fecha registrada no se incluyen</span></p>
+            <div class="col-barras">
+              <div class="col" *ngFor="let d of pedidosPorDia">
+                <span class="col-val">{{ d.texto }}</span>
+                <div class="col-barra" [style.height.%]="d.pct * 0.75"></div>
+                <span class="col-et">{{ d.etiqueta }}</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="tarjeta">
+            <h4>Embudo de despacho</h4>
+            <p class="tarjeta-nota">Órdenes por etapa del flujo logístico</p>
+            <div class="fila-barra" *ngFor="let e of embudoDespacho">
+              <span class="nombre">{{ e.nombre }}</span>
+              <span class="pista"><i [style.width.%]="e.pct"></i></span>
+              <span class="valor">{{ e.valor }}</span>
+            </div>
+          </section>
+
+          <section class="tarjeta">
+            <h4>Distribución por courier</h4>
+            <p class="tarjeta-nota">Órdenes activas por transportista</p>
+            <div class="fila-barra" *ngFor="let c of distribucionCourier">
+              <span class="nombre">{{ c.nombre }}</span>
+              <span class="pista"><i [style.width.%]="c.pct"></i></span>
+              <span class="valor">{{ c.cantidad }} · {{ c.pct }}%</span>
+            </div>
+            <p class="vacio-sobrio" *ngIf="distribucionCourier.length === 0">Sin órdenes activas.</p>
+          </section>
+
+          <section class="tarjeta">
+            <h4>Alertas de stock</h4>
+            <p class="tarjeta-nota">Productos en o bajo su mínimo. Cada alerta se publica en el topic <strong>alertas-stock</strong> de Kafka.</p>
+            <ul class="lista-alerta" *ngIf="alertasStock.length > 0">
+              <li *ngFor="let a of alertasStock">
+                <span>{{ a.nombre }}<br><small style="color:#6b7280;">Stock {{ a.stock }} · mínimo {{ a.stockMinimo }}</small></span>
+                <span class="etq" [class.sin]="a.stock <= 0" [class.bajo]="a.stock > 0">{{ a.stock <= 0 ? 'Sin stock' : 'Bajo mínimo' }}</span>
+              </li>
+            </ul>
+            <p class="vacio-sobrio" *ngIf="alertasStock.length === 0">Ningún producto bajo su stock mínimo.</p>
+          </section>
+
+          <section class="tarjeta">
+            <h4>Clientes con mayor valor en curso</h4>
+            <p class="tarjeta-nota">Top 5 según el total de sus órdenes activas</p>
+            <div class="fila-barra ancho-valor" *ngFor="let c of topClientes">
+              <span class="nombre">{{ c.nombre }}</span>
+              <span class="pista"><i [style.width.%]="c.pct"></i></span>
+              <span class="valor">{{ clp(c.monto) }}</span>
+            </div>
+            <p class="vacio-sobrio" *ngIf="topClientes.length === 0">Sin órdenes activas.</p>
+          </section>
+
+          <section class="tarjeta ancha">
+            <h4>Actividad reciente</h4>
+            <p class="tarjeta-nota">Últimos movimientos de órdenes y cotizaciones, con quién los realizó.</p>
+            <ul class="actividad" *ngIf="actividadReciente.length > 0">
+              <li *ngFor="let e of actividadReciente">
+                <span class="act-hora">{{ e.fecha | date:'dd/MM HH:mm' }}</span>
+                <span class="act-texto"><strong>{{ e.texto }}</strong><small *ngIf="e.detalle"> · {{ e.detalle }}</small></span>
+              </li>
+            </ul>
+            <p class="vacio-sobrio" *ngIf="actividadReciente.length === 0">Todavía no hay movimientos con fecha registrada.</p>
+          </section>
+        </div>
       </div>
 
       <!-- ================= MÓDULO 1: PEDIDOS / DESPACHOS ================= -->
       <div *ngIf="moduloActivo === 'PEDIDOS'" style="width: 100%;">
+
+        <div class="resumen" *ngIf="rolSeleccionado === 'ADMIN'">
+          <div><span>Órdenes activas</span><strong>{{ pedidos.length }}</strong></div>
+          <div><span>En preparación</span><strong>{{ getCount('En Preparacion') }}</strong></div>
+          <div><span>En ruta</span><strong>{{ getCountRuta() }}</strong></div>
+          <div><span>Incidencias</span><strong [class.alerta]="getCountIncidencias() > 0">{{ getCountIncidencias() }}</strong></div>
+          <div class="resumen-link"><a (click)="cambiarModulo('INDICADORES')">Ver panel de indicadores</a></div>
+        </div>
+        <div class="resumen" *ngIf="rolSeleccionado === 'OPERADOR'">
+          <div><span>Pendientes de picking</span><strong>{{ getCount('En Preparacion') }}</strong></div>
+          <div><span>Listos para despacho</span><strong>{{ getCount('Listo para Despacho') }}</strong></div>
+        </div>
         
         <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; width: 100%; padding: 14px 18px; border-radius: 6px 6px 0 0; border: 1px solid #cbd5e1; border-bottom: none; box-sizing: border-box;">
           <div>
@@ -477,6 +536,7 @@
             <thead>
               <tr style="background: #f8fafc; border-bottom: 1px solid #cbd5e1; color: #475569; font-weight: 700;">
                 <th style="padding: 10px 14px;">Tracking</th>
+                <th style="padding: 10px 14px;">Creación</th>
                 <th *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">Cliente</th>
                 <th *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">Destino</th>
                 <th style="padding: 10px 14px;">Producto Solicitado</th>
@@ -489,14 +549,18 @@
             <tbody>
               <tr *ngFor="let p of pedidosFiltrados" style="border-bottom: 1px solid #f1f5f9;">
                 <td style="padding: 10px 14px; font-weight: 700; color: #0f172a;">{{ p.tracking }}</td>
+                <td style="padding: 10px 14px; color: #475569; white-space: nowrap;">
+                  {{ p.fechaCreacion ? (p.fechaCreacion | date:'dd/MM/yyyy HH:mm') : 'Sin registro' }}
+                  <div *ngIf="p.aceptadaPor" style="margin-top: 2px; font-size: 10px; color: #16a34a; font-weight: 600; white-space: normal;">Cotización aceptada por {{ p.aceptadaPor }}</div>
+                </td>
                 <td *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">{{ p.cliente }}</td>
                 <td *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">{{ p.destino }}</td>
                 <td style="padding: 10px 14px;">{{ p.producto }}</td>
                 <td style="padding: 10px 14px;"><strong>{{ p.cantidad }}</strong> un.</td>
                 <td *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">{{ p.courier }}</td>
                 <td style="padding: 10px 14px;">
-                  <span style="background: #f8fafc; color: #334155; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid #cbd5e1;">
-                    {{ p.estado }}
+                  <span style="background: #f8fafc; color: #334155; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid #cbd5e1; white-space: nowrap; display: inline-block;">
+                    {{ etiquetaEstadoPedido(p.estado) }}
                   </span>
                   <div *ngIf="p.incidencia" style="margin-top: 3px; font-size: 10px; color: #dc2626; font-weight: 600;">
                     [Incidencia: {{ p.incidencia }}]
@@ -509,6 +573,7 @@
                         <option *ngFor="let est of estadosDisponibles" [value]="est">{{ est }}</option>
                       </select>
                       <button (click)="abrirModalIncidencia(p)" style="background: #d97706; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Incidencia</button>
+                      <button (click)="verDetallePedido(p)" style="background: #475569; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Historial</button>
                       <button (click)="abrirModalEditar(p)" style="background: #2563eb; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Editar</button>
                       <button (click)="eliminarPedido(p.id, p.tracking)" style="background: #dc2626; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Eliminar</button>
                     </div>
@@ -568,6 +633,7 @@
                 <th style="padding: 10px 14px;">Stock Actual</th>
                 <th style="padding: 10px 14px;">Umbral Mínimo</th>
                 <th style="padding: 10px 14px;">Estado</th>
+                <th style="padding: 10px 14px;">Movimientos</th>
                 <th *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">Acciones</th>
               </tr>
             </thead>
@@ -583,6 +649,7 @@
                     {{ prod.stock <= prod.stockMinimo ? 'BAJO STOCK' : 'NORMAL' }}
                   </span>
                 </td>
+                <td style="padding: 10px 14px;"><button class="arc-boton" (click)="verMovimientos(prod)">Ver stock descontado</button></td>
                 <td *ngIf="rolSeleccionado === 'ADMIN'" style="padding: 10px 14px;">
                   <div style="display: flex; gap: 4px;">
                     <button (click)="ajustarStockRapido(prod, -1)" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 11px;">-1</button>
@@ -622,7 +689,7 @@
             </thead>
             <tbody>
               <tr *ngFor="let cot of cotizaciones" style="border-bottom: 1px solid #f1f5f9;">
-                <td style="padding: 10px 14px; color: #64748b;">{{ cot.fecha }}</td>
+                <td style="padding: 10px 14px; color: #64748b; white-space: nowrap;">{{ cot.fechaCreacion ? (cot.fechaCreacion | date:'dd/MM/yyyy HH:mm') : 'Sin registro' }}</td>
                 <td style="padding: 10px 14px; font-weight: 700; color: #0f172a;">{{ cot.cliente }}</td>
                 <td style="padding: 10px 14px;">{{ cot.producto }}</td>
                 <td style="padding: 10px 14px;"><strong>{{ cot.cantidad }}</strong> un.</td>
@@ -630,8 +697,9 @@
                 <td style="padding: 10px 14px; font-weight: 700; color: #16a34a;">${{ cot.totalEst | number }}</td>
                 <td style="padding: 10px 14px;">
                   <span style="padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; background: #e2e8f0; color: #334155;">
-                    {{ cot.estado }}
+                    {{ etiquetaEstadoCotizacion(cot.estado) }}
                   </span>
+                  <div *ngIf="cot.aceptadaPor && cot.estado === 'ACEPTADA'" style="margin-top: 3px; font-size: 10px; color: #16a34a; font-weight: 600;">Aceptada por {{ cot.aceptadaPor }}</div>
                 </td>
                 <td style="padding: 10px 14px; text-align: center;">
                   <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
@@ -642,6 +710,7 @@
                       <option value="RECHAZADA">Rechazada</option>
                     </select>
                     <span *ngIf="cot.estado === 'ACEPTADA' && stockInsuficiente(cot)" style="font-size: 11px; font-weight: 700; color: #b91c1c;">Stock insuficiente (disp.: {{ productoDeCotizacion(cot)?.stock }})</span>
+                    <button (click)="verDetalleCotizacion(cot)" style="background: #475569; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Historial</button>
                     <button *ngIf="cot.estado === 'ACEPTADA'" [disabled]="generandoGuia.has(cot.id)" (click)="convertirCotizacionEnPedido(cot)" style="background: #16a34a; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
                       Generar Guia
                     </button>
@@ -656,10 +725,192 @@
         </div>
       </div>
 
+      <!-- ================= MÓDULO 4: ARCHIVO ================= -->
+      <div *ngIf="moduloActivo === 'ARCHIVO' && rolSeleccionado === 'ADMIN'" class="arc">
+        <div class="arc-cabecera">
+          <div>
+            <h3>Archivo</h3>
+            <p>Registro permanente de cotizaciones y órdenes cerradas. Nada se borra: aquí queda el respaldo, con su historial.</p>
+          </div>
+          <button class="arc-boton" (click)="cargarArchivo()" [disabled]="archivoCargando">{{ archivoCargando ? 'Actualizando...' : 'Actualizar' }}</button>
+        </div>
+
+        <div class="arc-pestanas">
+          <button [class.activa]="archivoTab === 'COTIZACIONES'" (click)="seleccionarArchivoTab('COTIZACIONES')">Cotizaciones ({{ archivoCotizaciones.length }})</button>
+          <button [class.activa]="archivoTab === 'ORDENES'" (click)="seleccionarArchivoTab('ORDENES')">Órdenes ({{ archivoPedidos.length }})</button>
+        </div>
+
+        <div class="arc-filtros">
+          <input type="text" [(ngModel)]="filtroArchivoTexto" placeholder="Buscar por cliente, producto o guía" />
+          <select [(ngModel)]="filtroArchivoEstado" *ngIf="archivoTab === 'COTIZACIONES'">
+            <option value="TODOS">Todos los estados</option>
+            <option value="CONVERTIDA">Convertidas en guía</option>
+            <option value="RECHAZADA">Rechazadas</option>
+          </select>
+          <select [(ngModel)]="filtroArchivoEstado" *ngIf="archivoTab === 'ORDENES'">
+            <option value="TODOS">Todos los estados</option>
+            <option value="Entregado">Entregadas</option>
+            <option value="Eliminada">Eliminadas</option>
+          </select>
+        </div>
+
+        <div *ngIf="archivoError" class="arc-error">{{ archivoError }}</div>
+
+        <!-- Cotizaciones archivadas -->
+        <div class="arc-tabla" *ngIf="archivoTab === 'COTIZACIONES'">
+          <table>
+            <thead>
+              <tr>
+                <th>Creada</th><th>Cliente</th><th>Producto</th><th>Cant.</th><th>Destino</th><th>Total est.</th><th>Resultado</th><th>Cerrada</th><th>Guía</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of archivoCotizacionesFiltradas">
+                <td class="nowrap">{{ c.fechaCreacion ? (c.fechaCreacion | date:'dd/MM/yyyy HH:mm') : 'Sin registro' }}</td>
+                <td><strong>{{ c.cliente }}</strong></td>
+                <td>{{ c.producto }}</td>
+                <td>{{ c.cantidad }} un.</td>
+                <td>{{ c.comuna }}, {{ c.region }}</td>
+                <td class="nowrap">${{ c.totalEst | number }}</td>
+                <td><span class="arc-estado" [class.ok]="c.estado === 'CONVERTIDA'" [class.no]="c.estado === 'RECHAZADA'">{{ etiquetaEstadoCotizacion(c.estado) }}</span></td>
+                <td class="nowrap">{{ c.fechaCierre ? (c.fechaCierre | date:'dd/MM/yyyy HH:mm') : '-' }}</td>
+                <td>{{ c.pedidoTracking || '-' }}</td>
+                <td>
+                  <div class="arc-acciones">
+                    <button class="arc-boton" (click)="verDetalleCotizacion(c, true)">Ver detalle</button>
+                    <button class="arc-boton principal" *ngIf="c.estado === 'RECHAZADA'" (click)="devolverCotizacion(c)">Devolver a bandeja</button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="archivoCotizacionesFiltradas.length === 0">
+                <td colspan="10" class="arc-vacio">{{ archivoCotizaciones.length === 0 ? 'Aún no hay cotizaciones archivadas.' : 'Ninguna cotización coincide con el filtro.' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Órdenes archivadas -->
+        <div class="arc-tabla" *ngIf="archivoTab === 'ORDENES'">
+          <table>
+            <thead>
+              <tr>
+                <th>Creada</th><th>Guía</th><th>Cliente</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Estado final</th><th>Cerrada</th><th>Origen</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of archivoPedidosFiltrados">
+                <td class="nowrap">{{ p.fechaCreacion ? (p.fechaCreacion | date:'dd/MM/yyyy HH:mm') : 'Sin registro' }}</td>
+                <td><strong>{{ p.tracking }}</strong></td>
+                <td>{{ p.cliente }}</td>
+                <td>{{ p.producto }}</td>
+                <td>{{ p.cantidad }} un.</td>
+                <td class="nowrap">${{ p.total | number }}</td>
+                <td><span class="arc-estado" [class.ok]="p.estado === 'Entregado' && !p.eliminado" [class.no]="p.eliminado">{{ estadoArchivoPedido(p) }}</span></td>
+                <td class="nowrap">
+                  <ng-container *ngIf="p.eliminado">{{ p.fechaEliminacion ? (p.fechaEliminacion | date:'dd/MM/yyyy HH:mm') : '-' }}<div class="arc-sub">por {{ p.eliminadoPor || 'sin registro' }}</div></ng-container>
+                  <ng-container *ngIf="!p.eliminado">{{ p.fechaCierre ? (p.fechaCierre | date:'dd/MM/yyyy HH:mm') : '-' }}</ng-container>
+                </td>
+                <td>{{ p.aceptadaPor ? 'Cotización aceptada por ' + p.aceptadaPor : 'Orden directa' }}</td>
+                <td><div class="arc-acciones"><button class="arc-boton" (click)="verDetallePedido(p, true)">Ver detalle</button></div></td>
+              </tr>
+              <tr *ngIf="archivoPedidosFiltrados.length === 0">
+                <td colspan="10" class="arc-vacio">{{ archivoPedidos.length === 0 ? 'Aún no hay órdenes archivadas.' : 'Ninguna orden coincide con el filtro.' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </main>
 
   <!-- ================= MODALES DE CONTROL ================= -->
+
+  <!-- Detalle e historial (cotizaciones y órdenes) -->
+  <div *ngIf="detalle" class="det-fondo" (click)="cerrarDetalle()">
+    <div class="det-caja" (click)="$event.stopPropagation()">
+      <div class="det-titulo">
+        <h3 *ngIf="detalle.cotizacion">Cotización #{{ detalle.cotizacion.id }} · {{ detalle.cotizacion.cliente }}</h3>
+        <h3 *ngIf="detalle.pedido">Guía {{ detalle.pedido.tracking }} · {{ detalle.pedido.cliente }}</h3>
+        <button class="det-cerrar" (click)="cerrarDetalle()">Cerrar</button>
+      </div>
+
+      <div class="det-datos" *ngIf="detalle.cotizacion as c">
+        <div><span>Producto</span>{{ c.producto }}</div>
+        <div><span>Cantidad</span>{{ c.cantidad }} un.</div>
+        <div><span>Destino</span>{{ c.comuna }}, {{ c.region }}</div>
+        <div><span>Total estimado</span>${{ c.totalEst | number }}</div>
+        <div><span>Correo de contacto</span>{{ c.email || 'No informado' }}</div>
+        <div><span>Estado</span>{{ etiquetaEstadoCotizacion(c.estado) }}</div>
+        <div><span>Creada</span>{{ c.fechaCreacion ? (c.fechaCreacion | date:'dd/MM/yyyy HH:mm') : 'Sin registro' }}<small *ngIf="c.creadaPor"> · por {{ c.creadaPor }}</small></div>
+        <div *ngIf="c.aceptadaPor"><span>Aceptada</span>{{ c.fechaAceptacion | date:'dd/MM/yyyy HH:mm' }} · por {{ c.aceptadaPor }}</div>
+        <div *ngIf="c.fechaCierre"><span>Cerrada</span>{{ c.fechaCierre | date:'dd/MM/yyyy HH:mm' }}</div>
+        <div *ngIf="c.pedidoTracking"><span>Guía generada</span>{{ c.pedidoTracking }}</div>
+      </div>
+
+      <div class="det-datos" *ngIf="detalle.pedido as p">
+        <div><span>Producto</span>{{ p.producto }}</div>
+        <div><span>Cantidad</span>{{ p.cantidad }} un.</div>
+        <div><span>Destino</span>{{ p.destino }}</div>
+        <div><span>Total</span>${{ p.total | number }}</div>
+        <div><span>Courier</span>{{ p.courier }}</div>
+        <div><span>Estado</span>{{ estadoArchivoPedido(p) }}</div>
+        <div><span>Creada</span>{{ p.fechaCreacion ? (p.fechaCreacion | date:'dd/MM/yyyy HH:mm') : 'Sin registro' }}<small *ngIf="p.creadoPor"> · por {{ p.creadoPor }}</small></div>
+        <div *ngIf="p.aceptadaPor"><span>Cotización aceptada</span>{{ p.fechaAceptacion | date:'dd/MM/yyyy HH:mm' }} · por {{ p.aceptadaPor }}</div>
+        <div *ngIf="p.fechaCierre"><span>Entregada</span>{{ p.fechaCierre | date:'dd/MM/yyyy HH:mm' }}</div>
+        <div *ngIf="p.eliminado"><span>Eliminada</span>{{ p.fechaEliminacion | date:'dd/MM/yyyy HH:mm' }} · por {{ p.eliminadoPor || 'sin registro' }}</div>
+        <div *ngIf="p.incidencia"><span>Incidencia vigente</span>{{ p.incidencia }}</div>
+      </div>
+
+      <h4 class="det-sub">Historial</h4>
+      <div *ngIf="detalle.cargando" class="arc-vacio">Cargando historial...</div>
+      <ol class="det-linea" *ngIf="!detalle.cargando">
+        <li *ngFor="let e of detalle.historial">
+          <div class="det-linea-cab"><strong>{{ etiquetaAccion(e.accion) }}</strong><span>{{ e.fecha | date:'dd/MM/yyyy HH:mm' }} · {{ e.usuario || 'sistema' }}</span></div>
+          <div class="det-linea-det" *ngIf="e.detalle">{{ e.detalle }}</div>
+        </li>
+      </ol>
+      <p *ngIf="!detalle.cargando && detalle.historial.length === 0" class="arc-vacio">Este registro es anterior al historial: no tiene eventos guardados.</p>
+
+      <div class="det-pie" *ngIf="detalle.cotizacion && detalle.desdeArchivo && detalle.cotizacion.estado === 'RECHAZADA'">
+        <button class="arc-boton principal" (click)="devolverCotizacion(detalle.cotizacion)">Devolver a la bandeja</button>
+      </div>
+    </div>
+  </div>
+  <!-- Movimientos de stock por producto -->
+  <div *ngIf="movimientosProducto as mp" class="det-fondo" (click)="cerrarMovimientos()">
+    <div class="det-caja" (click)="$event.stopPropagation()">
+      <div class="det-titulo">
+        <h3>Stock descontado · {{ mp.producto.nombre }}</h3>
+        <button class="det-cerrar" (click)="cerrarMovimientos()">Cerrar</button>
+      </div>
+      <div class="det-datos">
+        <div><span>SKU</span>{{ mp.producto.sku }}</div>
+        <div><span>Stock actual</span>{{ mp.producto.stock }} un.</div>
+        <div><span>Total descontado por pedidos</span>{{ totalDescontado() }} un.</div>
+      </div>
+      <div *ngIf="mp.cargando" class="arc-vacio">Cargando movimientos...</div>
+      <div *ngIf="mp.error" class="arc-error">No se pudieron cargar los movimientos desde el servidor.</div>
+      <div class="arc-tabla" *ngIf="!mp.cargando && !mp.error && mp.lista.length > 0">
+        <table>
+          <thead><tr><th>Fecha</th><th>Pedido</th><th>Cliente</th><th>Pidió</th><th>Stock antes</th><th>Quedaron</th><th>Realizado por</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let m of mp.lista">
+              <td class="nowrap">{{ m.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="nowrap"><strong *ngIf="m.referencia">{{ m.referencia }}</strong><span *ngIf="!m.referencia" class="arc-sub">{{ m.tipo === 'AJUSTE' ? 'Ajuste manual' : 'Sin pedido' }}</span></td>
+              <td>{{ m.cliente || '—' }}</td>
+              <td class="nowrap"><strong [style.color]="m.cantidad < 0 ? '#b91c1c' : '#166534'">{{ m.cantidad < 0 ? '-' + (0 - m.cantidad) : '+' + m.cantidad }}</strong> un.</td>
+              <td class="nowrap">{{ m.stockAntes }}</td>
+              <td class="nowrap"><strong>{{ m.stockDespues }}</strong></td>
+              <td>{{ m.usuario || 'sistema' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p *ngIf="!mp.cargando && !mp.error && mp.lista.length === 0" class="arc-vacio">Este producto aún no tiene movimientos de stock registrados. Aparecerán desde la próxima guía generada.</p>
+    </div>
+  </div>
+
   <!-- Modal Incidencias -->
   <div *ngIf="pedidoParaIncidencia" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000;">
     <div style="background: white; padding: 20px; border-radius: 6px; width: 420px; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">

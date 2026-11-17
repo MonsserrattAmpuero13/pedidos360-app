@@ -38,14 +38,18 @@ backend-pedidos --(pedidos-creados, clave = tracking)--> Kafka (3 brokers) --> n
 backend-pedidos --(alertas-stock, clave = sku)---------> Kafka (3 brokers) --> alertas-stock-group
 ```
 
-| Tópico | Particiones | Réplicas | Clave | Consumer group |
-|---|---|---|---|---|
-| `pedidos-creados` | 3 | 3 | tracking | `notificaciones-group` |
-| `alertas-stock` | 3 | 3 | sku | `alertas-stock-group` |
+| Tópico | Particiones | Réplicas | Retención | Limpieza | Clave | Consumer group |
+|---|---|---|---|---|---|---|
+| `pedidos-creados` | 3 | 3 | 7 días | `delete` | tracking | `notificaciones-group` |
+| `alertas-stock` | 3 | 3 | 3 días | `compact,delete` | sku | `alertas-stock-group` |
+| `pedidos-creados.DLT` | 3 | 3 | 30 días | `delete` | (la del mensaje original) | — |
+| `alertas-stock.DLT` | 3 | 3 | 30 días | `delete` | (la del mensaje original) | — |
 
-- Productor con `acks=all` e idempotencia; consumidores con confirmación manual y reintentos.
+- Productor con `acks=all`, idempotencia, reintentos, `linger.ms` y compresión; consumidores con confirmación manual, reintentos y DLT.
 - Si Kafka no responde, el pedido se guarda igual.
-- Retención por defecto: 7 días, política `delete`, `min.insync.replicas=2`.
+- Todos los tópicos tienen `min.insync.replicas=2`: con `acks=all`, un mensaje se confirma solo si al menos 2 de las 3 réplicas lo tienen.
+- `alertas-stock` usa compactación porque la clave es el SKU: se conserva la alerta más reciente de cada producto.
+- Los parámetros están declarados en [`kafka/crear-topicos.sh`](kafka/crear-topicos.sh). El clúster tiene desactivada la creación automática de tópicos, así que ese script es la fuente de verdad.
 
 ### Levantar el clúster (3 Zookeeper + 3 brokers + Kafka UI)
 
@@ -56,6 +60,15 @@ docker compose -f docker-compose.kafka-ui.yml up -d
 ```
 
 Kafka UI queda en http://localhost:8090.
+
+### Crear los tópicos
+
+Con el clúster arriba (es idempotente; también ajusta los tópicos que ya existan):
+
+```
+cd kafka
+bash crear-topicos.sh
+```
 
 ### Activar Kafka en el backend
 
